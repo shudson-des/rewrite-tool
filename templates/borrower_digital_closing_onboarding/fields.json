@@ -1,0 +1,118 @@
+{
+  "templateId": "borrower_digital_closing_onboarding",
+  "type": "onboarding",
+  "recipient": "borrower",
+
+  "fields": [
+    {
+      "name": "headline",
+      "source": "claude_output",
+      "rawField": "headline",
+      "shape": "String",
+      "modelAccessor": "@email.headline",
+      "required": true,
+      "notes": "Short, direct. Must not start with 'Your digital closing is ready'. Standard: 'Welcome to your digital closing'."
+    },
+    {
+      "name": "summary",
+      "source": "claude_output",
+      "rawField": "summary",
+      "shape": "String | null",
+      "modelAccessor": "@email.summary",
+      "required": false,
+      "notes": "1–2 sentences framing the email. Optional — headline may be sufficient on its own."
+    },
+    {
+      "name": "capabilities_items",
+      "source": "claude_output",
+      "rawField": "capabilities",
+      "rawShape": "String — intro line + bullet lines prefixed with '• '",
+      "rawExample": "With this experience, you'll be able to:\n• Review your closing documents online\n• Securely eSign most documents\n• Spend less time at your in-person signing appointment",
+      "shape": "Array<String>",
+      "modelAccessor": "@email.capabilities_items",
+      "required": false,
+      "parsingNote": "Strip the intro line ('With this experience, you'll be able to:'), split on newline, strip '• ' prefix, reject blank lines. New model method needed.",
+      "rubyMethod": "def capabilities_items\n  return [] unless capabilities.present?\n  capabilities.split(\"\\n\")\n              .map { |l| l.strip.sub(/^•\\s*/, '') }\n              .reject { |l| l.blank? || l.end_with?(':') }\nend"
+    },
+    {
+      "name": "closing_info_details",
+      "source": "claude_output",
+      "rawField": "closingInfo",
+      "rawShape": "String — '• Label: value' bullet lines",
+      "rawExample": "• Date: March 15, 2024\n• Time: 2:00 PM EST\n• Property address: 123 Main St",
+      "shape": "Array<{ label: String, value: String }>",
+      "modelAccessor": "@email.closing_info_details",
+      "required": true,
+      "validationNote": "Required by template validation (runSectionValidation). HAML guards defensively with .present? in case bypassed.",
+      "parsingNote": "Parse each '• Label: value' line into a hash. Lines that don't match the pattern are dropped. New model method needed.",
+      "rubyMethod": "def closing_info_details\n  return [] unless closing_info.present?\n  closing_info.split(\"\\n\").filter_map do |line|\n    m = line.strip.match(/^•\\s*(.+?):\\s*(.+)$/)\n    { label: m[1].strip, value: m[2].strip } if m\n  end\nend"
+    },
+    {
+      "name": "timeline_steps",
+      "source": "claude_output",
+      "rawField": "timeline",
+      "rawShape": "String — '• ' bullet lines",
+      "rawExample": "• Review your documents online\n• Complete your eSign documents\n• Attend your in-person signing appointment\n• Your closing is complete",
+      "shape": "Array<String>",
+      "modelAccessor": "@email.timeline_steps",
+      "required": true,
+      "validationNote": "Required by template validation (runSectionValidation). HAML guards defensively with .present? in case bypassed.",
+      "parsingNote": "Split on newline, strip '• ' prefix, reject blank lines. New model method needed.",
+      "rubyMethod": "def timeline_steps\n  return [] unless timeline.present?\n  timeline.split(\"\\n\")\n          .map { |l| l.strip.sub(/^•\\s*/, '') }\n          .reject(&:blank?)\nend"
+    },
+    {
+      "name": "security_note",
+      "source": "claude_output",
+      "rawField": "reassurance",
+      "rawShape": "String — security prose + '\\nLearn more about digital closings in the Borrower Resource Center →' as literal text",
+      "rawExample": "Your closing documents are shared through Snapdocs, a secure platform used by Acme Bank.\nLearn more about digital closings in the Borrower Resource Center →",
+      "shape": "String",
+      "modelAccessor": "@email.security_note",
+      "required": false,
+      "parsingNote": "Return only the prose lines — exclude any line matching 'Borrower Resource Center'. The resource link is rendered explicitly in the HAML as a link_to, not embedded in this field. New model method needed.",
+      "rubyMethod": "def security_note\n  return nil unless reassurance.present?\n  reassurance.split(\"\\n\")\n             .reject { |l| l.match?(/Borrower Resource Center/i) }\n             .join(' ').strip.presence\nend"
+    },
+    {
+      "name": "borrower_resource_center_url",
+      "source": "rails_constant",
+      "rawField": null,
+      "shape": "String (URL)",
+      "modelAccessor": "borrower_resource_center_url",
+      "required": true,
+      "engineeringNote": "Must be defined as a named route helper or a constant before the HAML can render. If the route does not exist yet, use a temporary constant: BORROWER_RESOURCE_CENTER_URL = 'https://snapdocs.com/borrower-resources' and replace with the correct named route once confirmed."
+    },
+    {
+      "name": "contact_guidance",
+      "source": "hardcoded",
+      "rawField": null,
+      "shape": "String (static)",
+      "modelAccessor": null,
+      "required": true,
+      "value": "If you have questions, contact your lender.",
+      "notes": "Hardcoded in the HAML — not a model field. Do not pass through Claude output or a dynamic accessor."
+    }
+  ],
+
+  "excludedFields": [
+    {
+      "name": "next_steps",
+      "reason": "Onboarding is not action_required. No next steps block is rendered."
+    },
+    {
+      "name": "key_details / key_details_title",
+      "reason": "Closing details are rendered via closing_info_details as a structured dl. Generic key_details block is not used."
+    },
+    {
+      "name": "lender_team",
+      "reason": "Not part of the locked borrower onboarding structure."
+    },
+    {
+      "name": "reply_guidance",
+      "reason": "No reply path in borrower onboarding. Excluded entirely."
+    },
+    {
+      "name": "info_sections",
+      "reason": "Generic section loop replaced by four explicit locked section accessors."
+    }
+  ]
+}
