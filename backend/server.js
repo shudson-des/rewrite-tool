@@ -10,7 +10,7 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://your-project.vercel.app'
+    'https://rewrite-tool-x7nl.vercel.app'
   ]
 }));
 const port = process.env.PORT || 3001;
