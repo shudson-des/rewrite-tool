@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Button, Tag, Typography, theme } from 'antd';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rewrite-tool-backend-s6zi.onrender.com';
 const { Text, Title } = Typography;
 const { useToken } = theme;
 
