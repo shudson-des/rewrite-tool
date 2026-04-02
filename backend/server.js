@@ -3,7 +3,6 @@ import express from 'express';
 import cors from 'cors';
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, buildUserMessage } from './prompt.js';
-import cors from 'cors';
 
 const app = express();
 
