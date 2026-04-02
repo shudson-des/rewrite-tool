@@ -3,8 +3,16 @@ import express from 'express';
 import cors from 'cors';
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, buildUserMessage } from './prompt.js';
+import cors from 'cors';
 
 const app = express();
+
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://your-project.vercel.app'
+  ]
+}));
 const port = process.env.PORT || 3001;
 
 const client = new Anthropic({
