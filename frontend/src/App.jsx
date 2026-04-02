@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Button, Tag, Typography, theme } from 'antd';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const { Text, Title } = Typography;
 const { useToken } = theme;
 
@@ -2726,7 +2727,7 @@ export default function App() {
     setCopied(false);
 
     try {
-      const response = await fetch('/api/rewrite', {
+      const response = await fetch(`${API_BASE_URL}/api/rewrite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ emailContent, userType, requiresAction }),
@@ -2810,7 +2811,7 @@ export default function App() {
   async function handleRecheck() {
     setRecheckLoading(true);
     try {
-      const response = await fetch('/api/compliance', {
+      const response = await fetch(`${API_BASE_URL}/api/compliance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ result: edited, userType, requiresAction, emailContent }),
