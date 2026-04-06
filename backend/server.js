@@ -59,10 +59,10 @@ function runComplianceCheck(result, userType, requiresAction, emailContent) {
   const issues = [];
   const isInterruption = WORKFLOW_INTERRUPTION_PATTERN.test(emailContent || '');
 
-  // Borrower/lender/settlement_agent in auto should not be status_update for workflow interruptions
+  // Signer/lender/settlement_agent in auto should not be status_update for workflow interruptions
   if (requiresAction === 'auto' && result.emailType === 'status_update' && isInterruption) {
-    if (userType === 'borrower') {
-      issues.push("Possible regression: borrower email classified as status_update, but content suggests a workflow interruption. Consider action_required.");
+    if (userType === 'signer') {
+      issues.push("Possible regression: signer email classified as status_update, but content suggests a workflow interruption. Consider action_required.");
     } else if (userType === 'lender') {
       issues.push("Possible regression: lender email classified as status_update, but content suggests a workflow interruption. Consider action_required.");
     } else if (userType === 'settlement_agent') {
@@ -117,7 +117,7 @@ function runComplianceCheck(result, userType, requiresAction, emailContent) {
     issues.push("Action required email is missing next steps.");
   }
 
-  // INVALID OUTPUT: subject line must include borrower name when one is present in key details
+  // INVALID OUTPUT: subject line must include signer name when one is present in key details
   const subject = result.subjectLine || '';
 
   // Support subject must not use "Action required:" prefix
@@ -129,11 +129,11 @@ function runComplianceCheck(result, userType, requiresAction, emailContent) {
   if (userType === 'support' && /^action required/i.test(result.headline || '')) {
     issues.push('Support headline should not repeat "Action required" — describe the task directly (e.g. "Review canceled signing").');
   }
-  const borrowerDetail = (result.keyDetails || []).find(
-    (d) => d.label?.toLowerCase() === 'borrower'
+  const signerDetail = (result.keyDetails || []).find(
+    (d) => d.label?.toLowerCase() === 'signer'
   );
-  if (subject && borrowerDetail?.value && !subject.includes(borrowerDetail.value)) {
-    issues.push(`INVALID OUTPUT: borrower name "${borrowerDetail.value}" is available but missing from subject line: "${subject}"`);
+  if (subject && signerDetail?.value && !subject.includes(signerDetail.value)) {
+    issues.push(`INVALID OUTPUT: signer name "${signerDetail.value}" is available but missing from subject line: "${subject}"`);
   }
 
   // Subject line must not contain disallowed terms
@@ -182,18 +182,18 @@ function runComplianceCheck(result, userType, requiresAction, emailContent) {
     issues.push('Body contains disallowed phrase "file #".');
   }
 
-  // Borrower emails: prohibited role terms and duplicate contact guidance
-  if (userType === 'borrower') {
+  // Signer emails: prohibited role terms and duplicate contact guidance
+  if (userType === 'signer') {
     const allBodyText = [result.notes, result.closingInfo, result.reassurance, result.summary, result.capabilities, result.timeline, body].filter(Boolean).join('\n');
     if (/\bloan officer\b/i.test(allBodyText)) {
-      issues.push('Borrower output contains prohibited term "loan officer" — use "lender" instead.');
+      issues.push('Signer output contains prohibited term "loan officer" — use "lender" instead.');
     }
     if (/\bsettlement agent\b/i.test(allBodyText)) {
-      issues.push('Borrower output contains prohibited term "settlement agent" — use "settlement team" instead.');
+      issues.push('Signer output contains prohibited term "settlement agent" — use "settlement team" instead.');
     }
     const contactLineCount = (allBodyText.match(/\bif you have (?:any )?questions?\b/gi) || []).length;
     if (contactLineCount > 1) {
-      issues.push(`Borrower email contains ${contactLineCount} contact guidance lines — only one is allowed (injected by the template system).`);
+      issues.push(`Signer email contains ${contactLineCount} contact guidance lines — only one is allowed (injected by the template system).`);
     }
   }
 
@@ -206,8 +206,8 @@ app.post('/api/rewrite', async (req, res) => {
   if (!emailContent || typeof emailContent !== 'string' || emailContent.trim().length === 0) {
     return res.status(400).json({ error: 'emailContent is required and must be a non-empty string.' });
   }
-  if (!userType || !['borrower', 'lender', 'settlement_agent', 'settlement_office', 'notary', 'support'].includes(userType)) {
-    return res.status(400).json({ error: 'userType must be one of: borrower, lender, settlement_agent, settlement_office, notary, support.' });
+  if (!userType || !['signer', 'lender', 'settlement_agent', 'settlement_office', 'notary', 'support'].includes(userType)) {
+    return res.status(400).json({ error: 'userType must be one of: signer, lender, settlement_agent, settlement_office, notary, support.' });
   }
   if (!['auto', 'yes', 'no'].includes(requiresAction)) {
     return res.status(400).json({ error: 'requiresAction must be one of: auto, yes, no.' });
@@ -358,7 +358,7 @@ app.post('/api/rewrite', async (req, res) => {
       result.lenderTeam = expanded;
     }
 
-    // Guardrail: remove support/contact guidance from all borrower body fields.
+    // Guardrail: remove support/contact guidance from all signer body fields.
     // The template system injects one canonical contact line at render time.
     // Any contact guidance Claude writes into body slots causes duplication.
     //
@@ -374,7 +374,7 @@ app.post('/api/rewrite', async (req, res) => {
     //
     // After stripping, remaining content is role-normalized (loan officer → lender, etc.)
     // to catch any role terms that appeared in non-contact contexts.
-    if (userType === 'borrower') {
+    if (userType === 'signer') {
       const isSupportGuidance = (s) => {
         const t = (s || '').trim().toLowerCase();
         return (
@@ -442,7 +442,7 @@ app.post('/api/rewrite', async (req, res) => {
     // in case the model misclassified the emailType.
     const isMessageEmail = result.emailType === 'message' || !!result.messageText;
     if (isMessageEmail && !result.replyGuidance) {
-      result.replyGuidance = userType === 'borrower'
+      result.replyGuidance = userType === 'signer'
         ? 'Reply directly to this email to send a message to your lender and settlement team, or log in to Snapdocs to respond.'
         : 'Reply directly to this email, or log in to Snapdocs to respond.';
     }

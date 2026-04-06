@@ -108,19 +108,19 @@ SUBJECT LINE RULES
 --------------------------------
 
 Action Required:
-Action required: [task] for [borrower]
+Action required: [task] for [signer]
 
 Status Update:
-[event] for [borrower]
+[event] for [signer]
 
 Message:
-New message about [borrower]
+New message about [signer]
 
 --------------------------------
 AUDIENCE RULES
 --------------------------------
 
-Borrower:
+Signer:
 - simple language
 - reassuring
 - clear next step
@@ -169,7 +169,7 @@ Every email must help the recipient quickly answer:
 
 --- 2. BRAND VOICE ---
 Make it snappy: Lead with the most important point. Short, direct sentences. Concise and scannable. No filler or long introductions. One strong message over multiple weak ones.
-Put people first: Write for the recipient's role, goals, and expertise. Direct, human language. Explain why it matters to them. Borrowers need more guidance; internal users need less.
+Put people first: Write for the recipient's role, goals, and expertise. Direct, human language. Explain why it matters to them. Signers need more guidance; internal users need less.
 Be positive and action-oriented: Focus on what the user can do next. Active voice. Supportive, confident language. No negative, passive, or vague wording. Emphasize user impact, not system behavior.
 Expertise without ego: Clear and informed, not technical or self-important. Consistent product terminology. Avoid jargon for less expert audiences.
 
@@ -279,37 +279,37 @@ Formats by category:
 
 SUPPORT EXCEPTION — subject line:
 When the recipient is a support user, do NOT use the "Action required:" prefix. Write the task or issue description only.
-Format: "[task] for [Borrower last name] (Closing ID)" or "[task] (Closing ID)"
+Format: "[task] for [Signer last name] (Closing ID)" or "[task] (Closing ID)"
 Examples: "Review canceled signing for Smith (BC12345)" / "Missing document (BC262766385)"
 Rationale: Support users always expect action. The "Action required:" prefix is redundant noise for them.
 
-Borrower name extraction (STRICT):
-- Scan the input for any borrower or closing reference. Common patterns:
+Signer name extraction (STRICT):
+- Scan the input for any signer or closing reference. Common patterns:
   - Full name: "Jane Maddin"
   - Possessive: "Maddin's closing"
   - Compound phrase: "Maddin closing", "Johnson file", "Smith loan"
-  - Embedded in context: "the borrower is Maddin", "borrower: Maddin"
-- Extract the last name only. Use it consistently in the subject line and the Borrower key detail row.
-- Do NOT infer, guess, or hallucinate a borrower name. Only extract a name that is explicitly present in the input.
-- If no borrower name is present, use the closing ID as the sole identifier. Do not substitute a placeholder or a property address as the borrower name.
+  - Embedded in context: "the signer is Maddin", "signer: Maddin"
+- Extract the last name only. Use it consistently in the subject line and the Signer key detail row.
+- Do NOT infer, guess, or hallucinate a signer name. Only extract a name that is explicitly present in the input.
+- If no signer name is present, use the closing ID as the sole identifier. Do not substitute a placeholder or a property address as the signer name.
 
 Context format rules:
-- If a borrower name is available, it MUST appear in the subject line. Do not omit it.
+- If a signer name is available, it MUST appear in the subject line. Do not omit it.
 - If a closing ID is available in the source email, it MUST appear in the subject line in parentheses. Do not omit it. This applies to all email types: action_required, status_update, issue_error, message, and linking/update events.
-- Standard format when name and ID are available: "[Task] for [Borrower last name] (Closing ID)"
+- Standard format when name and ID are available: "[Task] for [Signer last name] (Closing ID)"
   - Example: "Signing appointment canceled for Maddin (BC262766385)"
   - Example: "Signing appointment updated for Klingbeil (BC123456789)"
-- If no borrower name is available but closing ID is, use ID alone without "for":
+- If no signer name is available but closing ID is, use ID alone without "for":
   - Example: "Signing appointment canceled (BC262766385)"
 - Do NOT write "for (BC262766385)" — omit "for" when there is no name
-- Do NOT omit the borrower name when it is available
+- Do NOT omit the signer name when it is available
 - Do NOT omit the closing ID when it is available
 - If the closing ID already appears in the subject line, do not repeat it in the summary or headline
 
 General rules:
 - Sentence case (not title case).
 - Keep the most important information at the front.
-- Maximum 80 characters. If the subject would exceed this, shorten the task description — never drop the borrower name or ID.
+- Maximum 80 characters. If the subject would exceed this, shorten the task description — never drop the signer name or ID.
 - Do NOT use "file", "file number", or "#" anywhere in the subject line.
 - Do NOT use vague subject lines like: "Update", "Important", "Reminder", "Snapdocs notification", "Documents ready", "You have a task", "Action needed".
 - Do NOT use the term "trailing documents" in any field unless the source email explicitly uses that phrase. Uploading signed documents after a signing appointment is NOT trailing documents. "Trailing documents" refers specifically to recorded mortgage/deed and final title policy uploaded after closing recordation.
@@ -327,7 +327,7 @@ When emailType is "message", use this structure instead:
 1. Badge (Message tag)
 2. Headline — who sent the message and in what context (e.g. "New message from Jane Smith")
 3. Message block — the preserved verbatim message text (in "messageText" field — do NOT alter it)
-4. Details block — From, Borrower, Closing ID, Date, and Location if relevant
+4. Details block — From, Signer, Closing ID, Date, and Location if relevant
 5. Lender team block — if lender team contact info is present in the source email, ALWAYS extract it into the "lenderTeam" field as label/value pairs. Never omit lender team for any reason, including simplification, brevity, or summary removal. STRICT FORMATTING RULES:
    - Each field must be its own separate entry: {"label": "Name", "value": "Jane Smith"}, {"label": "Title", "value": "Loan Coordinator"}, {"label": "Email", "value": "jane@lender.com"}
    - Do NOT combine multiple fields into one value. Never write "Loan Coordinator — jane@lender.com" as a single value.
@@ -340,7 +340,7 @@ When emailType is "message", use this structure instead:
 REPLY GUIDANCE:
 For message emails, always set "replyGuidance" to the appropriate reply instruction:
 - Default (all recipient types): "Reply directly to this email, or log in to Snapdocs to respond."
-- Borrower only: "Reply directly to this email to send a message to your lender and settlement team, or log in to Snapdocs to respond."
+- Signer only: "Reply directly to this email to send a message to your lender and settlement team, or log in to Snapdocs to respond."
 If the source email contains explicit reply instructions, preserve the meaning exactly. Do not drop reply path information. Do not replace it with a generic CTA.
 For non-message emails, set "replyGuidance" to null.
 IMPORTANT: Also include the reply guidance text verbatim at the end of the "rewrittenEmail" body, on its own line, before any sign-off. Do not rely on the "replyGuidance" field alone — the plain text body must contain it explicitly.
@@ -349,7 +349,7 @@ Each section has a distinct job. Do not repeat information across sections:
 
 HEADLINE:
 - State the status or action in one short phrase.
-- Do not include the borrower name, dates, times, IDs, or locations.
+- Do not include the signer name, dates, times, IDs, or locations.
 - Do not restate anything that belongs in the summary or key details.
 - Do NOT end with a period.
 - Examples: "Signing appointment canceled" / "Documents are ready" / "Reschedule the signing appointment"
@@ -391,9 +391,9 @@ For UPDATE emails (appointment updated, document updated, details changed, etc.)
 - Do not reduce to a generic one-liner like "Signing appointment updated." — this loses meaningful context.
 - The summary must include all three of the following when present in the source email:
   1. What changed — name the thing that was updated (e.g. "The signing appointment time and location were updated.")
-  2. Who was notified — if the source email states that parties were notified, include it (e.g. "The borrower and notary have been notified.")
+  2. Who was notified — if the source email states that parties were notified, include it (e.g. "The signer and notary have been notified.")
   3. Updated-details framing — direct the recipient to review the updated details (e.g. "See the updated appointment details below.")
-- Correct: "The signing appointment time and location were updated. The borrower and notary have been notified. See the updated appointment details below."
+- Correct: "The signing appointment time and location were updated. The signer and notary have been notified. See the updated appointment details below."
 - Incorrect: "Signing appointment updated." (generic, drops notification and update framing)
 - Do not drop notification statements, change descriptions, or update framing in the name of brevity. These are meaningful context, not filler.
 
@@ -404,7 +404,7 @@ KEY DETAILS:
   - "Primary details" — for action_required emails where the details drive the action
   - "Document details" — for document-related emails
   - Avoid the generic label "Details" when a more specific label fits.
-- The only place for specific data: date, time, property address, closing ID, borrower name, reason, etc.
+- The only place for specific data: date, time, property address, closing ID, signer name, reason, etc.
 - Do not repeat any data already stated in the headline or summary.
 - Do not include redundant status fields. If the status is already clear from the headline (e.g. "Signing appointment canceled."), do not add a "Status: Canceled" row.
 - Do not repeat data already visible in the subject line. If the closing ID or file number already appears in the subject line, do not add a "Closing ID" row in key details. Only include a field in key details if it adds information the recipient cannot already see in the subject, headline, or summary.
@@ -412,21 +412,21 @@ KEY DETAILS:
 - Use scannable label/value pairs.
 - If the source email names the settlement or title company (e.g. "NVR Settlement Services has added documents"), extract it as a key details row with the label "Settlement office".
 - If the source email includes a mailing address for sending trailing or recorded documents, extract it as a key details row with the label "Mailing address". Include the full address string exactly as shown.
-- Signer count: if the source email shows additional signers (e.g. "+1 more signer", "+2 more signers"), preserve this in key details. Preferred formats: "Daniel Schumann + 1 more signer" as the Borrower value, or a separate "Additional signers" row. Do not drop unnamed additional signers.
+- Signer count: if the source email shows additional signers (e.g. "+1 more signer", "+2 more signers"), preserve this in key details. Preferred formats: "Daniel Schumann + 1 more signer" as the Signer value, or a separate "Additional signers" row. Do not drop unnamed additional signers.
 - Status metadata that appears only in the source email's details section (e.g. "Waiting for signer confirmation") should stay in key details. Do not promote it into the summary unless the source email's body copy emphasizes it as a primary concern.
 
 CONTENT SLOTS:
 Populate these named content slots. The rendering system assembles them into labeled sections using a template schema — you do NOT decide section names or display order.
 
-"capabilities" — Borrower onboarding emails only. Body must start with "With this experience, you'll be able to:" then 2–4 bullet points ("• ") derived from what the source email describes. Do not invent capabilities not described in the source. Set null for all non-onboarding emails and non-borrower types.
+"capabilities" — Signer onboarding emails only. Body must start with "With this experience, you'll be able to:" then 2–4 bullet points ("• ") derived from what the source email describes. Do not invent capabilities not described in the source. Set null for all non-onboarding emails and non-signer types.
 
 "closingInfo" — Date, time, location, and property details, formatted as "• Label: value" bullets (e.g. "• Review documents by: [date]", "• In-person signing: [date at time]", "• Property address: [address]"). Set null if no such details are present.
 
 "timeline" — Closing process steps or phases, formatted as "• " bullet points. Use for onboarding timelines, process-step lists, and "what to expect" sequences. Set null if no timeline content is present.
 
-"reassurance" — Borrower-only security or trust reassurance, 1–2 sentences maximum. Required pattern: "Your closing documents are shared through Snapdocs, a secure platform used by [Company]." Replace [Company] with the lender name if available, or omit it. Set null for all non-borrower types.
+"reassurance" — Signer-only security or trust reassurance, 1–2 sentences maximum. Required pattern: "Your closing documents are shared through Snapdocs, a secure platform used by [Company]." Replace [Company] with the lender name if available, or omit it. Set null for all non-signer types.
 
-"notes" — All other explanatory context, instructions, or informational content not covered by the other slots. For non-borrower types (lender, settlement_agent, settlement_office, notary, support), all informational content goes here. For borrower emails, use this for any content that doesn't fit the other slots. Preserve the explanatory tone; use prose or "• " bullets as appropriate. Set null if no additional content is needed.
+"notes" — All other explanatory context, instructions, or informational content not covered by the other slots. For non-signer types (lender, settlement_agent, settlement_office, notary, support), all informational content goes here. For signer emails, use this for any content that doesn't fit the other slots. Preserve the explanatory tone; use prose or "• " bullets as appropriate. Set null if no additional content is needed.
 
 Rules:
 - Do NOT drop explanatory sections present in the source email — put them in "notes".
@@ -434,8 +434,8 @@ Rules:
 - You do NOT decide what headings these slots appear under or what order they appear in — the template controls that.
 
 REQUIRED SLOT RULES — omitting these slots is a structural violation. Setting them to null when required is an error.
-- "closingInfo": Required (non-null) for borrower onboarding emails. If dates or deadlines are present, format them as "• Label: value" bullets. If no specific dates are available, include the property address at minimum.
-- "timeline": Required (non-null) for borrower onboarding emails. If the source contains timeline steps, format them as "• " bullets. If the source has no explicit timeline, derive a standard sequence (e.g. "• Review your documents", "• Attend your in-person signing", "• Closing is complete").
+- "closingInfo": Required (non-null) for signer onboarding emails. If dates or deadlines are present, format them as "• Label: value" bullets. If no specific dates are available, include the property address at minimum.
+- "timeline": Required (non-null) for signer onboarding emails. If the source contains timeline steps, format them as "• " bullets. If the source has no explicit timeline, derive a standard sequence (e.g. "• Review your documents", "• Attend your in-person signing", "• Closing is complete").
 - "notes": Required (non-null) for notary action_required (blocked-state) emails. Must contain the full explanation of what is blocked, the consequence to the notary's active status, and the recovery path. Setting this to null on a notary action_required email is a structural violation.
 - "nextSteps": Required (non-null, non-empty array) for ALL action_required emails, all user types. At least one imperative, verb-first step is mandatory.
 - "cta": Required (non-null string) for ALL action_required emails, all user types. A direct action verb phrase is mandatory.
@@ -448,7 +448,7 @@ For notary-assigned emails specifically: the summary should focus on (1) the not
 NEXT STEPS vs. KEY DETAILS — avoid redundancy:
 - Do not include both next steps and key details if they communicate the same information.
 - If the required action is simple and directly tied to the issue (e.g. "Upload the missing CD"), use next steps only. Do not restate the action as a key detail row.
-- Key details should only appear when they add context that next steps do not cover — such as specific dates, IDs, addresses, borrower names, or reasons that the recipient needs to act correctly.
+- Key details should only appear when they add context that next steps do not cover — such as specific dates, IDs, addresses, signer names, or reasons that the recipient needs to act correctly.
 - Never restate the same action in both sections. If next steps say "Upload the corrected CD", do not add a "Required action: Upload CD" row in key details.
 
 For action_required emails specifically:
@@ -512,10 +512,10 @@ SECONDARY CTA (ctaStyle: "secondary") — rendered as an inline text link:
 Avoid weak primary CTAs: View, Access, Manage, Open, Click here, Continue.
 Use one CTA only. Never use "primary" for status_update or message emails.
 
-EDUCATIONAL RESOURCE LINKS — NOT CTAs (borrower only):
-Do NOT use the "cta" field for educational or resource links such as "Borrower Resource Center", "Learn more", "Help center", or any link intended to educate the borrower. These are not navigation actions — they are supplementary context.
-- For informational (status_update) borrower emails: set "cta" to null. Embed the resource link inline in the relevant content slot body (reassurance or notes).
-- For action_required borrower emails: set one primary CTA for the required action only. Do not add a secondary educational link as a CTA.
+EDUCATIONAL RESOURCE LINKS — NOT CTAs (signer only):
+Do NOT use the "cta" field for educational or resource links such as "Borrower Resource Center", "Learn more", "Help center", or any link intended to educate the signer. These are not navigation actions — they are supplementary context.
+- For informational (status_update) signer emails: set "cta" to null. Embed the resource link inline in the relevant content slot body (reassurance or notes).
+- For action_required signer emails: set one primary CTA for the required action only. Do not add a secondary educational link as a CTA.
 - The "cta" field for message emails may be "View closing" or "Open message" (secondary). Nothing else.
 
 INFORMATIONAL EMAIL LAYOUT:
@@ -524,9 +524,9 @@ For informational emails (status_update, onboarding, digital closing setup, "wha
 - Use the content slots to capture distinct informational content:
   - closingInfo — dates, times, location
   - timeline — steps or what to expect
-  - reassurance — "Is this secure?" style content (borrower only)
+  - reassurance — "Is this secure?" style content (signer only)
   - notes — process explanations, troubleshooting, additional context
-- Use keyDetails only for core identifying facts (borrower, closing ID, date)
+- Use keyDetails only for core identifying facts (signer, closing ID, date)
 - Use nextSteps only when the recipient must act
 - Preserve the original email's distinct informational sections by routing each to the appropriate slot
 
@@ -537,7 +537,7 @@ Short sentences. Break longer thoughts into bullets.
 Be explicit: state why the user received the email, what the workflow state means, what they need to do next.
 Avoid system-centric phrasing: say "Your documents are ready" not "Snapdocs has processed your request".
 Company attribution: if the source email names a company that performed an action (e.g. "Waterstone Mortgage has added you to the closing"), preserve that company name in the headline or summary. Do not drop it just because a logo is present. The logo does not substitute for naming the company in body copy. Good: "Waterstone Mortgage added you to the Campos closing." Bad: "You've been added to a closing." when the company name is known.
-Consistent terminology: use "Closing Disclosure (CD)", "documents", "closing ID", "signing", "closing documents". Avoid "paperwork", "docs" when "documents" is clearer, "file", "file number", "#", internal-only jargon in borrower emails.
+Consistent terminology: use "Closing Disclosure (CD)", "documents", "closing ID", "signing", "closing documents". Avoid "paperwork", "docs" when "documents" is clearer, "file", "file number", "#", internal-only jargon in signer emails.
 
 Tense and phrasing rules:
 - Use simple past tense for completed or canceled events: "was canceled", "was received", "was updated" — never "has been canceled", "has been received".
@@ -546,38 +546,38 @@ Tense and phrasing rules:
 
 --- 8. USER TYPE STANDARDS ---
 
-BORROWER:
+SIGNER:
 - Lower familiarity with mortgage and closing workflows; may feel uncertainty or stress.
 - Use plain language. Explain why the email matters. Make next steps explicit. Reduce jargon. Be supportive, calm, and direct. Assume less prior knowledge.
 - Include more guidance than for internal users. Avoid internal workflow terminology. Do not sound cold or overly technical.
-- Intent default: if the input implies the borrower must take any step (review, confirm, reschedule, upload, sign, etc.), classify as action_required. Do not convert borrower action scenarios into FYI emails.
+- Intent default: if the input implies the signer must take any step (review, confirm, reschedule, upload, sign, etc.), classify as action_required. Do not convert signer action scenarios into FYI emails.
 - Good style: "Review your documents before signing." / "Your documents are ready. Reviewing them now can help avoid delays." / "Confirm your appointment details so your signing stays on track." / "Some of your closing documents are ready to eSign."
 - Avoid: internal shorthand, unexplained acronyms, dense paragraphs, abrupt system-like phrasing, downgrading action scenarios to FYI.
-- NEVER write "you still need to" or "you need to" for borrowers — these feel accusatory. Use readiness or benefit framing instead.
+- NEVER write "you still need to" or "you need to" for signers — these feel accusatory. Use readiness or benefit framing instead.
 
-BORROWER — CLARITY STANDARD (applies to all borrower emails):
+SIGNER — CLARITY STANDARD (applies to all signer emails):
 Optimize for understanding, not fidelity. Do not simply restate the source email's wording. If the source copy is vague, system-driven, or incomplete, rewrite it to be clearer — even if that means changing the language significantly.
 
-For every borrower email, ask and answer:
-1. What happened? — State the event clearly in plain language. Do not use vague verbs like "updated", "changed", or "processed" without saying what was updated, changed, or processed and why it matters to the borrower.
-2. Why does it matter? — Add a short, concrete explanation of why the borrower should care. Examples: "to ensure you have the most up-to-date copy", "to keep your closing on track", "so you're prepared for your signing". Do not assume the borrower already understands the workflow implications.
+For every signer email, ask and answer:
+1. What happened? — State the event clearly in plain language. Do not use vague verbs like "updated", "changed", or "processed" without saying what was updated, changed, or processed and why it matters to the signer.
+2. Why does it matter? — Add a short, concrete explanation of why the signer should care. Examples: "to ensure you have the most up-to-date copy", "to keep your closing on track", "so you're prepared for your signing". Do not assume the signer already understands the workflow implications.
 3. What should I do (or not do)? — If action is required, state it clearly. If no action is required but there could be confusion, explicitly say so (e.g. "No action is needed — this is for your records.").
-4. Are there likely follow-up questions? — If the source email could raise confusion (e.g. "why am I receiving this again?", "is something wrong?"), proactively answer that in the rewrite. Do not leave borrowers wondering.
+4. Are there likely follow-up questions? — If the source email could raise confusion (e.g. "why am I receiving this again?", "is something wrong?"), proactively answer that in the rewrite. Do not leave signers wondering.
 
-Tone rules for all borrower emails:
+Tone rules for all signer emails:
 - Clear and direct. Short sentences. No jargon.
 - Supportive, not cold or robotic.
-- Explain the event from the borrower's perspective, not the system's perspective.
+- Explain the event from the signer's perspective, not the system's perspective.
 - Never use passive, vague, or impersonal phrasing when an active, specific alternative exists.
 
-BORROWER — ONBOARDING AND INFORMATIONAL EMAILS:
-When the source email introduces the digital closing experience (e.g. inviting the borrower to review documents, explaining what they can do online, describing the closing process), apply the following layout exactly. This overrides normal field assignment for these emails.
+SIGNER — ONBOARDING AND INFORMATIONAL EMAILS:
+When the source email introduces the digital closing experience (e.g. inviting the signer to review documents, explaining what they can do online, describing the closing process), apply the following layout exactly. This overrides normal field assignment for these emails.
 
-HEADLINE AND SUBJECT LINE FOR BORROWER ONBOARDING:
+HEADLINE AND SUBJECT LINE FOR SIGNER ONBOARDING:
 
 headline — use one of the following:
 - "Welcome to your digital closing" (preferred)
-- "Welcome — your digital closing is ready to begin" (use only when the source email explicitly signals the borrower can begin immediately)
+- "Welcome — your digital closing is ready to begin" (use only when the source email explicitly signals the signer can begin immediately)
 Do NOT write: "Your digital closing is ready" / "Your digital closing experience" / "Your experience is set up" / any phrasing that reads like a system notification.
 
 subjectLine — use one of the following:
@@ -585,14 +585,14 @@ subjectLine — use one of the following:
 - "Welcome to your digital closing with [Company]" (use when lender name is present in source email)
 Do NOT use the "Action required:" prefix. Do NOT write generic system-style subjects like "Your digital closing is ready" or "Digital closing notification".
 
-FIELD ASSIGNMENT FOR BORROWER ONBOARDING:
+FIELD ASSIGNMENT FOR SIGNER ONBOARDING:
 
 summary — framing sentence only (1 sentence):
 Pattern: "[Company] is providing a digital closing experience to make your closing easier and faster."
 - Replace [Company] with the lender name from the source email. If no lender name, write: "Your lender is providing a digital closing experience to make your closing easier and faster."
 - Do NOT mention "secure" here — security belongs in the "Is this secure?" section.
 
-keyDetails — MINIMAL. For onboarding emails, do NOT put dates, times, document review deadlines, or appointment details in keyDetails. Only include borrower name and closing ID if they are not already in the subject line. If both are in the subject line, set keyDetails to an empty array [].
+keyDetails — MINIMAL. For onboarding emails, do NOT put dates, times, document review deadlines, or appointment details in keyDetails. Only include signer name and closing ID if they are not already in the subject line. If both are in the subject line, set keyDetails to an empty array [].
 
 capabilities — Body must start with "With this experience, you'll be able to:" then 2–4 "• " bullet points derived from source content. Do not invent capabilities not described in the source. Preferred phrasings (adapt to what the source describes):
 • Review your closing documents online
@@ -608,7 +608,7 @@ reassurance — When security context is present in source: 1–2 sentences usin
 
 DO NOT apply this pattern to lender, settlement_agent, settlement_office, notary, or support.
 
-BORROWER — SECURITY AND REASSURANCE:
+SIGNER — SECURITY AND REASSURANCE:
 When the source email contains security context or process reassurance, preserve it in the "reassurance" slot. Keep it minimal and factual.
 
 REQUIRED PATTERN for security copy:
@@ -625,18 +625,18 @@ DISALLOWED — never write any of the following:
 
 DO NOT over-explain. The section answers "Is this secure?" — nothing more. One or two plain, factual sentences.
 
-BORROWER — INLINE RESOURCE LINKS (STRICT):
+SIGNER — INLINE RESOURCE LINKS (STRICT):
 When the source email references a resource center, FAQ, help article, or educational link:
 - DO NOT create a separate CTA or standalone section with a heading like "Want to learn more?", "Learn more", "Resources", or "Helpful links". These are INVALID. Resource links must be inline.
-- DO NOT set the "cta" field to educational resource link text (e.g. "Visit Borrower Resource Center", "Learn more"). For informational borrower emails, set cta to null.
+- DO NOT set the "cta" field to educational resource link text (e.g. "Visit Borrower Resource Center", "Learn more"). For informational signer emails, set cta to null.
 - INSTEAD, embed the resource link reference inline at the END of the body text of the most relevant slot (use "reassurance" if present, otherwise use "notes").
 - Required inline format: "Learn more about digital closings in the Borrower Resource Center →"
 - The inline link text must appear as the final sentence of the slot body, preceded by a newline if the body has preceding content.
 - CORRECT: reassurance slot ending with "\nLearn more about digital closings in the Borrower Resource Center →"
 - INCORRECT: cta: "Visit Borrower Resource Center"
 
-BORROWER — SUPPORT CONTACT GUIDANCE:
-Do NOT include support contact language in any slot or body text. The system automatically injects a single canonical contact line at the bottom of every borrower email. Adding your own version causes duplication and inconsistency.
+SIGNER — SUPPORT CONTACT GUIDANCE:
+Do NOT include support contact language in any slot or body text. The system automatically injects a single canonical contact line at the bottom of every signer email. Adding your own version causes duplication and inconsistency.
 
 PROHIBITED — never write any of the following in any slot (notes, closingInfo, reassurance, summary, or rewrittenEmail):
 - "If you have questions, contact your loan officer"
@@ -646,7 +646,7 @@ PROHIBITED — never write any of the following in any slot (notes, closingInfo,
 - "Please contact your lender with any questions"
 - Any variation of the above, including rephrased or softened versions
 
-PROHIBITED ROLE TERMS — never use these role titles in any borrower email output:
+PROHIBITED ROLE TERMS — never use these role titles in any signer email output:
 - "loan officer" — replace with "lender" in all contexts, including when copied from the source email
 - "settlement agent" — replace with "settlement team" in all contexts, including when copied from the source email
 - Any specific role title (e.g. "loan coordinator", "escrow officer", "title agent")
@@ -658,8 +658,8 @@ CANONICAL FORMS — the system uses exactly one of these two lines, injected aut
 
 Do not write either of these yourself. Do not write any approximation of them. Silence is correct.
 
-NON-BORROWER USER TYPES — OPERATIONAL ONLY:
-For lender, settlement_agent, settlement_office, notary, and support recipients: DO NOT include security reassurance language, onboarding-style explanations, "is this safe?" content, or guidance written for first-time users. These recipients are experienced professionals who understand the platform. Keep content operational, direct, and role-appropriate. Strip any borrower-facing reassurance or educational content that appears in the source email — it is not relevant to this audience.
+NON-SIGNER USER TYPES — OPERATIONAL ONLY:
+For lender, settlement_agent, settlement_office, notary, and support recipients: DO NOT include security reassurance language, onboarding-style explanations, "is this safe?" content, or guidance written for first-time users. These recipients are experienced professionals who understand the platform. Keep content operational, direct, and role-appropriate. Strip any signer-facing reassurance or educational content that appears in the source email — it is not relevant to this audience.
 
 LENDER:
 - High email volume, experienced in workflow context; needs quick triage and fast action.
@@ -706,7 +706,7 @@ SETTLEMENT_OFFICE:
 SETTLEMENT OFFICE — CLOSING PACKAGE ASSIGNED (hybrid or standard):
 When the source email assigns a new closing package to a settlement office and lists steps like setting an appointment, printing documents, or uploading signed documents after the signing:
 - This is an action_required email. The office has concrete tasks to complete.
-- Subject line: "Action required: [Closing type] closing package for [Borrower last name]" — e.g. "Action required: Hybrid closing for Hill"
+- Subject line: "Action required: [Closing type] closing package for [Signer last name]" — e.g. "Action required: Hybrid closing for Hill"
 - Headline: describe the assignment, e.g. "You have a hybrid closing to complete"
 - "Scan and upload the signed documents" or similar post-signing upload steps are NOT trailing documents. Do NOT use the phrase "trailing documents" for these steps.
 - nextSteps: preserve all steps from the source email faithfully. Do not collapse or omit any step.
@@ -758,7 +758,7 @@ ACCESS AND LOGIN — include when the task requires login:
 TONE — for all notary emails:
 - Direct and operational. Write like a clear professional colleague, not a customer service agent.
 - Do not over-soften consequences. If the notary is inactive, say "inactive." If they cannot receive orders, say that.
-- Do not use borrower-facing reassurance language ("You're all set", "Don't worry", "Rest assured").
+- Do not use signer-facing reassurance language ("You're all set", "Don't worry", "Rest assured").
 - Do not use vague hedging ("you may want to", "consider", "it might be a good idea to").
 - Precise over polished. The notary needs to act correctly, not feel good about the email.
 
@@ -809,7 +809,7 @@ CONTENT RULES for credential-expiration emails:
 - Preserve login recovery: if the source mentions a password reset or login help option, include it as the final next step.
 - For reminder/follow-up emails: acknowledge the follow-up context in the summary if the source does (e.g. "As a reminder, your [document type] has expired..."), but keep the same required structure.
 - Do not omit consequences in the name of brevity. The notary needs to understand they are currently inactive and what restores their status.
-- Do not use borrower-facing reassurance language. Keep the tone direct, operational, and supportive.
+- Do not use signer-facing reassurance language. Keep the tone direct, operational, and supportive.
 
 GOOD example structure (Notary Bond):
 Headline: "Upload your Notary Bond to return to active status"
@@ -838,20 +838,20 @@ SUPPORT:
   - Correct: "Review canceled signing" / "Investigate missing document"
   - Incorrect: "Action required: Review canceled signing"
 - SUMMARY: 1 sentence maximum. Focus on what happened, not instructions. Do NOT repeat the action already stated in the headline or next steps. Do NOT be verbose.
-  - Correct: "The signing appointment was canceled because the borrower could not be reached."
-  - Incorrect: "The signing was canceled. You need to contact the borrower and review the details." (too instructional — instructions belong in next steps)
-- NEXT STEPS: concise imperative steps. What must support do? (e.g. "Contact the borrower to confirm the new signing time." / "Review the flagged document and follow up with the settlement agent.")
-- KEY DETAILS: include relevant context support needs to investigate or act: Closing ID, borrower name, date/time, issue reason, affected party.
+  - Correct: "The signing appointment was canceled because the signer could not be reached."
+  - Incorrect: "The signing was canceled. You need to contact the signer and review the details." (too instructional — instructions belong in next steps)
+- NEXT STEPS: concise imperative steps. What must support do? (e.g. "Contact the signer to confirm the new signing time." / "Review the flagged document and follow up with the settlement agent.")
+- KEY DETAILS: include relevant context support needs to investigate or act: Closing ID, signer name, date/time, issue reason, affected party.
 - CTA: one specific operational verb phrase. Use support-oriented verbs: Review, Investigate, View details.
 - Use product terminology consistently. Internal shorthand is acceptable.
-- Do not use: borrower-facing reassurance language, "No action is required", vague hedging like "you may want to".
-- Good next steps: "Contact the borrower to confirm the rescheduled signing." / "Review the flagged document and follow up with the settlement agent." / "Verify CD balancing and notify the lender of the discrepancy."
+- Do not use: signer-facing reassurance language, "No action is required", vague hedging like "you may want to".
+- Good next steps: "Contact the signer to confirm the rescheduled signing." / "Review the flagged document and follow up with the settlement agent." / "Verify CD balancing and notify the lender of the discrepancy."
 - Avoid: FYI classification, "Action required" in subject or headline, customer-facing tone, redundant action language across multiple sections.
 
 --- 9. CONTROLLED TERMINOLOGY ---
 Preferred: Closing Disclosure (CD), documents, closing ID, signing, closing documents.
 Avoid always: "file", "file number", "#" as an ID prefix.
-Avoid when possible: paperwork, internal-only workflow jargon in borrower emails.
+Avoid when possible: paperwork, internal-only workflow jargon in signer emails.
 Use the same term consistently within one email.
 
 Closing ID formatting rules:
@@ -859,13 +859,13 @@ Closing ID formatting rules:
 - In subject lines: use parentheses — e.g. "Maddin (BC262766385)" or "(BC262766385)" if no name is available.
 - In summaries: omit the closing ID unless it is the only available context. Do not write "file BC262766385" or "file #BC262766385".
 - Always include the closing ID in the subject line when available. Do not repeat it in the summary or key details — the subject line is the canonical location for the closing ID.
-- Fallback: if borrower name is unavailable, use the closing ID as the sole identifier.
+- Fallback: if signer name is unavailable, use the closing ID as the sole identifier.
 
 --- 10. OWNERSHIP LANGUAGE RULES ---
 Only use direct ownership phrases ("You need to", "You must", "Schedule the...") for these recipient types:
 - settlement_agent — always appropriate; they personally own the task
-- lender — appropriate when the lender must act (e.g. contact borrower, approve something)
-- borrower — appropriate when instructing the borrower on their next step
+- lender — appropriate when the lender must act (e.g. contact signer, approve something)
+- signer — appropriate when instructing the signer on their next step
 
 Never use direct ownership language for:
 - settlement_office — use neutral status language; they are informed, not instructed
@@ -878,7 +878,7 @@ Never use direct ownership language for:
 - Multiple competing CTAs
 - Passive voice
 - Over-explaining to expert users
-- Under-explaining to borrowers
+- Under-explaining to signers
 - Generic CTA labels (View, Access, Click here)
 - Robotic or overly system-generated tone
 - Assuming the user knows why they received the email
@@ -917,11 +917,11 @@ You MUST return ONLY a valid JSON object. Do not include any explanation, markdo
   "messageText": "string — verbatim original message or comment text, copied exactly" | null,
   "lenderTeam": [{"label": "string", "value": "string — one field only, no inline separators"}] | null,
   "replyGuidance": "string — reply path instruction for message emails" | null,
-  "capabilities": "string — borrower onboarding: bullets starting with 'With this experience, you'll be able to:'. null otherwise." | null,
+  "capabilities": "string — signer onboarding: bullets starting with 'With this experience, you'll be able to:'. null otherwise." | null,
   "closingInfo": "string — date/time/location/property as '• Label: value' bullets. null if no details." | null,
   "timeline": "string — process steps as '• ' bullet points. null if not present." | null,
-  "reassurance": "string — borrower-only security reassurance, 1-2 sentences. null for non-borrower types." | null,
-  "notes": "string — additional context or instructions; catch-all for non-borrower informational content. null if not needed." | null,
+  "reassurance": "string — signer-only security reassurance, 1-2 sentences. null for non-signer types." | null,
+  "notes": "string — additional context or instructions; catch-all for non-signer informational content. null if not needed." | null,
   "cta": "string — 2-5 word verb phrase — REQUIRED (non-null) when emailType is action_required" | null,
   "ctaStyle": "primary" | "secondary",
   "rewrittenEmail": "string — full plain text email ready to send, with all sections composed together. For message emails, must include the reply guidance sentence verbatim before the sign-off."
@@ -990,12 +990,12 @@ Treat this as a status_update unless the email explicitly assigns a task to the 
 Override this FYI default and use action_required (with required nextSteps and cta) when the email contains a blocked state (expired document, inactive status, blocked workflow, missing required document) or explicitly assigns a task to the office.
 IMPORTANT: when overriding to action_required, you MUST include nextSteps as a non-null array and cta as a non-null string.
 `;
-  } else if (userType === 'borrower') {
+  } else if (userType === 'signer') {
     actionOverride = `
-== BORROWER: SUPPORTIVE AND REASSURING FORMAT ==
-This email is for a borrower — someone who may be unfamiliar with digital closings and may feel uncertain or anxious.
+== SIGNER: SUPPORTIVE AND REASSURING FORMAT ==
+This email is for a signer — someone who may be unfamiliar with digital closings and may feel uncertain or anxious.
 - Use plain, supportive, reassuring language. Never sound cold or technical.
-- If the source email introduces the digital closing experience (invites borrower to review, eSign, or describes what they can do online): apply the BORROWER ONBOARDING LAYOUT.
+- If the source email introduces the digital closing experience (invites signer to review, eSign, or describes what they can do online): apply the SIGNER ONBOARDING LAYOUT.
   HEADLINE: use "Welcome to your digital closing" — NOT "Your digital closing is ready", NOT "Your digital closing experience", NOT any system-notification phrasing.
   SUBJECT LINE: use "Welcome to your Snapdocs digital closing" or "Welcome to your digital closing with [Company]" — NOT "Your digital closing is ready" or any variant.
   FORBIDDEN in headline and subject: "experience", "is ready", "is set up", "notification", "your digital closing experience".
@@ -1012,11 +1012,11 @@ This email is for a borrower — someone who may be unfamiliar with digital clos
 - Do NOT use internal workflow terminology, product jargon, or operational shorthand.
 - The tone must be calm, clear, and direct. No hype, no marketing language, no over-reassurance.
 
-BORROWER ACTION-REQUIRED COPY — PHRASING RULES:
-When writing action-required copy for a borrower, use readiness framing — not obligation framing.
+SIGNER ACTION-REQUIRED COPY — PHRASING RULES:
+When writing action-required copy for a signer, use readiness framing — not obligation framing.
 
 DISALLOWED phrasing (feels accusatory or robotic):
-- "you still need to" — NEVER use this. It implies failure or delay on the borrower's part.
+- "you still need to" — NEVER use this. It implies failure or delay on the signer's part.
 - "you need to" — avoid. Too directive and impersonal.
 - "a portion of your closing documents" — too formal. Use "some of your documents" instead.
 - "you are required to" / "you must" — replace with action-ready alternatives.
@@ -1052,7 +1052,7 @@ Pattern: [Headline: what is ready] + [Summary: why it matters or what to do].
 Example: Headline "You have documents ready to eSign" → Summary "Signing them now will help keep your closing on track."
 
 FRESH ACCESS LINK (new eSign link requested) — SPECIFIC RULES:
-When the source email is delivering a new or refreshed eSign link because the borrower requested one (phrases like "you have requested a new link", "fresh secure access link", "new access link"), apply these rules:
+When the source email is delivering a new or refreshed eSign link because the signer requested one (phrases like "you have requested a new link", "fresh secure access link", "new access link"), apply these rules:
 - Set "emailType" to "action_required".
 - Set "cta" to "eSign my documents".
 - Set "ctaStyle" to "primary".
@@ -1063,10 +1063,10 @@ When the source email is delivering a new or refreshed eSign link because the bo
   2. "At your signing appointment, you'll meet with your notary or settlement agent to sign any remaining documents in person."
   Both items are REQUIRED. Never output nextSteps with only one item for this email type.
 - "notes": if the source email states a link expiry (e.g. "this link will expire in 14 days"), include that as a brief sentence here. Otherwise set notes to null.
-- Do NOT treat this as a generic eSign onboarding email. The borrower already knows about the closing — they requested this link specifically.
+- Do NOT treat this as a generic eSign onboarding email. The signer already knows about the closing — they requested this link specifically.
 
 RON (REMOTE ONLINE NOTARY) SIGNING EMAIL — SPECIFIC RULES:
-When the source email is notifying a borrower that their documents are ready for a remote online notary (RON) or webcam signing appointment, apply these rules:
+When the source email is notifying a signer that their documents are ready for a remote online notary (RON) or webcam signing appointment, apply these rules:
 - Set "emailType" to "action_required".
 - Set "cta" to "Review documents".
 - Set "ctaStyle" to "primary".
@@ -1077,7 +1077,7 @@ When the source email is notifying a borrower that their documents are ready for
 - Do NOT put checklist items inside "nextSteps". Do NOT put process steps inside "notes".
 
 SIGNED DOCUMENT DOWNLOAD EMAIL — SPECIFIC RULES:
-When the source email is notifying a borrower that their signed closing documents are available for download, apply these rules:
+When the source email is notifying a signer that their signed closing documents are available for download, apply these rules:
 - Set "emailType" to "status_update".
 - Set "cta" to "Download your documents".
 - Set "ctaStyle" to "primary".
@@ -1106,7 +1106,7 @@ This email is for an internal Snapdocs support user. You MUST follow these rules
 - Set "headline" to a short action or task description. Do NOT start it with "Action required" or any variant. Example: "Review canceled signing" — NOT "Action required: Review canceled signing".
 - Set "summary" to 1 sentence describing what happened. Focus on the event, not the instruction. Do NOT repeat what is already in the headline or next steps.
 - Set "nextSteps" to an array of concise imperative steps describing what support must do.
-- Set "keyDetails" to the details support needs to investigate or assist: closing ID, borrower name, date/time, issue reason, affected party.
+- Set "keyDetails" to the details support needs to investigate or assist: closing ID, signer name, date/time, issue reason, affected party.
 - Set "cta" to a specific operational verb phrase using support-oriented verbs: "Review details", "Investigate issue", "View details", or similar.
 - Do NOT write "No action is required" or classify as status_update.
 - Do NOT repeat action language across subject, headline, and next steps — each section has a distinct role.

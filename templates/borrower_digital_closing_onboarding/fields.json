@@ -1,7 +1,7 @@
 {
-  "templateId": "borrower_digital_closing_onboarding",
+  "templateId": "signer_digital_closing_onboarding",
   "type": "onboarding",
-  "recipient": "borrower",
+  "recipient": "signer",
 
   "fields": [
     {
@@ -104,11 +104,11 @@
     },
     {
       "name": "lender_team",
-      "reason": "Not part of the locked borrower onboarding structure."
+      "reason": "Not part of the locked signer onboarding structure."
     },
     {
       "name": "reply_guidance",
-      "reason": "No reply path in borrower onboarding. Excluded entirely."
+      "reason": "No reply path in signer onboarding. Excluded entirely."
     },
     {
       "name": "info_sections",

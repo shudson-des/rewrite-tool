@@ -1,6 +1,6 @@
 # Snapdocs Email Rewriter
 
-This tool standardizes transactional emails across borrower, lender, settlement, and notary audiences.
+This tool standardizes transactional emails across signer, lender, settlement, and notary audiences.
 
 ## Features
 

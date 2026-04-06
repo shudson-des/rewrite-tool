@@ -120,7 +120,7 @@ function validateFiles(files) {
 let nextFileId = 1;
 
 const USER_TYPES = [
-  { value: 'borrower', label: 'Borrower', desc: 'Homebuyer completing a mortgage closing' },
+  { value: 'signer', label: 'Signer', desc: 'Person signing the documents' },
   { value: 'lender', label: 'Lender', desc: 'Mortgage lender or loan officer' },
   { value: 'settlement_agent', label: 'Settlement agent', desc: 'Person directly responsible for the closing task' },
   { value: 'settlement_office', label: 'Settlement office', desc: 'Office audience copied for visibility or coordination' },
@@ -602,7 +602,7 @@ function EmailPreview({ data, logoUrl, userType }) {
 // ─── PII anonymization ────────────────────────────────────────────────────────
 
 const ANON_ROLE_LABELS = {
-  'borrower':         'Borrower FirstName LastName',
+  'signer':         'Signer FirstName LastName',
   'lender':           'Lender FirstName LastName',
   'settlement agent': 'Settlement Agent Name',
   'settlement office':'Settlement Office Name',
@@ -804,12 +804,12 @@ function isInformationalType(emailType) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 const TEMPLATE_CATALOG = [
-  // Borrower
+  // Signer
   {
-    id: 'borrower_digital_closing_onboarding',
-    label: 'Borrower: Digital closing onboarding',
+    id: 'signer_digital_closing_onboarding',
+    label: 'Signer: Digital closing onboarding',
     description: 'Introduces the digital closing experience, capabilities, and timeline.',
-    match: (d, u) => u === 'borrower' && !!d.capabilities,
+    match: (d, u) => u === 'signer' && !!d.capabilities,
     contactGuidance: 'lender',
     sections: [
       { slot: 'capabilities', label: 'What you can do', text: 'With this experience, you\'ll be able to:\n• Review your closing documents online\n• Securely eSign most documents\n• Spend less time at your in-person signing appointment' },
@@ -819,20 +819,20 @@ const TEMPLATE_CATALOG = [
     ],
   },
   {
-    id: 'borrower_signing_appointment_canceled',
-    label: 'Borrower: Signing appointment canceled',
-    description: 'Notifies the borrower that their signing appointment was canceled.',
-    match: (d, u) => u === 'borrower' && /cancel/i.test(d.headline || ''),
+    id: 'signer_signing_appointment_canceled',
+    label: 'Signer: Signing appointment canceled',
+    description: 'Notifies the signer that their signing appointment was canceled.',
+    match: (d, u) => u === 'signer' && /cancel/i.test(d.headline || ''),
     contactGuidance: 'lender_or_settlement',
     sections: [
       { slot: 'notes',       label: 'What this means' },
     ],
   },
   {
-    id: 'borrower_signing_appointment_scheduled',
-    label: 'Borrower: Signing appointment scheduled',
+    id: 'signer_signing_appointment_scheduled',
+    label: 'Signer: Signing appointment scheduled',
     description: 'Confirms a signing appointment has been scheduled.',
-    match: (d, u) => u === 'borrower' && d.emailType === 'status_update' &&
+    match: (d, u) => u === 'signer' && d.emailType === 'status_update' &&
       /schedul|confirm/i.test(d.headline || ''),
     contactGuidance: 'lender_or_settlement',
     sections: [
@@ -842,10 +842,10 @@ const TEMPLATE_CATALOG = [
     ],
   },
   {
-    id: 'borrower_signing_appointment_updated',
-    label: 'Borrower: Signing appointment updated',
-    description: 'Notifies the borrower that appointment details changed.',
-    match: (d, u) => u === 'borrower' && /updat|reschedul/i.test(d.headline || ''),
+    id: 'signer_signing_appointment_updated',
+    label: 'Signer: Signing appointment updated',
+    description: 'Notifies the signer that appointment details changed.',
+    match: (d, u) => u === 'signer' && /updat|reschedul/i.test(d.headline || ''),
     contactGuidance: 'lender_or_settlement',
     sections: [
       { slot: 'closingInfo',  label: 'Updated appointment details' },
@@ -854,10 +854,10 @@ const TEMPLATE_CATALOG = [
     ],
   },
   {
-    id: 'borrower_action_required_esign',
-    label: 'Borrower: eSign documents',
-    description: 'Prompts the borrower to electronically sign documents.',
-    match: (d, u) => u === 'borrower' && d.emailType === 'action_required' &&
+    id: 'signer_action_required_esign',
+    label: 'Signer: eSign documents',
+    description: 'Prompts the signer to electronically sign documents.',
+    match: (d, u) => u === 'signer' && d.emailType === 'action_required' &&
       /esign|sign electronically|sign your doc/i.test(d.headline || ''),
     contactGuidance: 'lender',
     sections: [
@@ -867,10 +867,10 @@ const TEMPLATE_CATALOG = [
     ],
   },
   {
-    id: 'borrower_ron_signing',
-    label: 'Borrower: Webcam signing',
-    description: 'Notifies the borrower their documents are ready for a remote online notary (RON) or webcam signing appointment.',
-    match: (d, u) => u === 'borrower' && d.emailType === 'action_required' &&
+    id: 'signer_ron_signing',
+    label: 'Signer: Webcam signing',
+    description: 'Notifies the signer their documents are ready for a remote online notary (RON) or webcam signing appointment.',
+    match: (d, u) => u === 'signer' && d.emailType === 'action_required' &&
       /webcam|notary|ron\b|online\s+signing|remote\s+online/i.test([d.headline, d.notes, d.summary].filter(Boolean).join(' ')),
     contactGuidance: 'lender',
     sections: [
@@ -879,10 +879,10 @@ const TEMPLATE_CATALOG = [
     ],
   },
   {
-    id: 'borrower_action_required_review',
-    label: 'Borrower: Review documents',
-    description: 'Prompts the borrower to review their closing documents.',
-    match: (d, u) => u === 'borrower' && d.emailType === 'action_required' &&
+    id: 'signer_action_required_review',
+    label: 'Signer: Review documents',
+    description: 'Prompts the signer to review their closing documents.',
+    match: (d, u) => u === 'signer' && d.emailType === 'action_required' &&
       /review|documents? ready/i.test(d.headline || ''),
     contactGuidance: 'lender',
     sections: [
@@ -891,10 +891,10 @@ const TEMPLATE_CATALOG = [
     ],
   },
   {
-    id: 'borrower_message_notification',
-    label: 'Borrower: New message',
-    description: 'Delivers a message from the lender or settlement team to the borrower.',
-    match: (d, u) => u === 'borrower' && d.emailType === 'message',
+    id: 'signer_message_notification',
+    label: 'Signer: New message',
+    description: 'Delivers a message from the lender or settlement team to the signer.',
+    match: (d, u) => u === 'signer' && d.emailType === 'message',
     contactGuidance: 'lender',
     sections: [],
   },
@@ -1436,16 +1436,16 @@ function generateJSON(data) {
 //                           appear in prose but not in structured fields (dates,
 //                           phones, emails, addresses, IDs, URLs, company names).
 //
-// Applies to ALL user types (borrower, lender, settlement_agent, settlement_office,
+// Applies to ALL user types (signer, lender, settlement_agent, settlement_office,
 // notary, support) with no per-type exemptions.
 
 // Structured-field placeholder registry.
 // Maps keyDetails/lenderTeam row labels (lowercased) to {{placeholder}} keys.
 // Every extractable structured field category must have an entry here.
 const LABEL_TO_PLACEHOLDER = {
-  'borrower':                  'borrower_name',
-  'client':                    'borrower_name',
-  'buyer':                     'borrower_name',
+  'signer':                  'signer_name',
+  'client':                    'signer_name',
+  'buyer':                     'signer_name',
   'closing id':                'closing_id',
   'closing':                   'closing_id',
   'file number':               'closing_id',
@@ -1501,16 +1501,16 @@ const LABEL_TO_PLACEHOLDER = {
   'scheduled by':              'settlement_office_name',
   'escrow number':             'escrow_number',
   'additional signers':        'additional_signers',
-  // Borrower contact info
-  'email':                     'borrower_email',
-  'email address':             'borrower_email',
-  'borrower email':            'borrower_email',
-  'phone':                     'borrower_phone',
-  'phone number':              'borrower_phone',
-  'borrower phone':            'borrower_phone',
-  'cell':                      'borrower_phone',
-  'cell phone':                'borrower_phone',
-  'mobile':                    'borrower_phone',
+  // Signer contact info
+  'email':                     'signer_email',
+  'email address':             'signer_email',
+  'signer email':            'signer_email',
+  'phone':                     'signer_phone',
+  'phone number':              'signer_phone',
+  'signer phone':              'signer_phone',
+  'cell':                      'signer_phone',
+  'cell phone':                'signer_phone',
+  'mobile':                    'signer_phone',
   // Closing type (e.g. "Hybrid signing", "RON", "In-person")
   'type':                      'closing_type',
   'closing type':              'closing_type',
@@ -1592,7 +1592,7 @@ const BULLET_LINE_PATTERNS = [
   { re: /^(•\s*Thumbs up:?\s+)(.+)$/i,                                                       ph: '{{thumbs_up_count}}' },
 ];
 
-// ─── Borrower support guidance cleanup ───────────────────────────────────────
+// ─── Signer support guidance cleanup ───────────────────────────────────────
 // Mirrors server.js logic but runs client-side at result storage time,
 // guaranteeing enforcement regardless of server state.
 
@@ -1615,23 +1615,23 @@ function stripEmptyLines(text) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// COPY STANDARDS: BORROWER CLEANUP
+// COPY STANDARDS: SIGNER CLEANUP
 //
-// sanitizeBorrowerResult() is the borrower copy enforcement layer.
+// sanitizeSignerResult() is the signer copy enforcement layer.
 //
 // Rules:
-// - borrower support guidance should be consistent
+// - signer support guidance should be consistent
 // - operational/internal support wording should be removed
 // - remove duplicate or misplaced support guidance
-// - normalize borrower-facing terminology
+// - normalize signer-facing terminology
 // - preserve meaning while reducing inconsistent phrasing
 //
 // Do not use this function to rewrite structure.
 // Structure belongs to template application and validation.
 // ─────────────────────────────────────────────────────────────────────────────
 
-function sanitizeBorrowerResult(result, userType) {
-  if (userType !== 'borrower' || !result) return result;
+function sanitizeSignerResult(result, userType) {
+  if (userType !== 'signer' || !result) return result;
 
   const isSupportGuidance = (s) => {
     const t = (s || '').trim().toLowerCase();
@@ -1649,7 +1649,7 @@ function sanitizeBorrowerResult(result, userType) {
     );
   };
 
-    const normalizeBorrowerCopy = (text) => {
+    const normalizeSignerCopy = (text) => {
     if (!text || typeof text !== 'string') return text;
     let s = text;
 
@@ -1689,14 +1689,14 @@ function sanitizeBorrowerResult(result, userType) {
   for (const f of ['notes', 'closingInfo', 'reassurance', 'summary', 'capabilities', 'timeline', 'rewrittenEmail']) {
     if (out[f]) {
       out[f] = stripSupportGuidance(out[f]);
-      if (out[f]) out[f] = normalizeBorrowerCopy(out[f]);
+      if (out[f]) out[f] = normalizeSignerCopy(out[f]);
     }
   }
 
   if (Array.isArray(out.nextSteps)) {
     out.nextSteps = out.nextSteps
       .filter(step => !isSupportGuidance(step))
-      .map(normalizeBorrowerCopy);
+      .map(normalizeSignerCopy);
     if (out.nextSteps.length === 0) out.nextSteps = null;
   }
 
@@ -1723,7 +1723,7 @@ function templateizeResult(data) {
   // copy (e.g. "the Millsaps closing") are caught when only the surname appears.
   // AKA / alias variants are split and each part registered individually so prose that
   // uses only one name form (e.g. the alias without the primary name) is also caught.
-  const PERSON_NAME_KEYS = new Set(['borrower_name', 'notary_name', 'signer_name', 'loan_officer_name']);
+  const PERSON_NAME_KEYS = new Set(['signer_name', 'notary_name', 'signer_name', 'loan_officer_name']);
   const AKA_SEP = /\s+(?:AKA|A\.K\.A\.|a\.k\.a\.|also known as)\s+/i;
   function addWithLastName(value, placeholder) {
     if (!valueMap.has(value)) valueMap.set(value, placeholder);
@@ -1787,9 +1787,9 @@ function templateizeResult(data) {
     } else if (value && !key) {
       // Value-format fallback: templatize by value shape when label isn't in LABEL_TO_PLACEHOLDER.
       if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && !valueMap.has(value)) {
-        valueMap.set(value, '{{borrower_email}}');
+        valueMap.set(value, '{{signer_email}}');
       } else if (/^\(?\d{3}\)?[-.\s]\d{3}[-.\s]\d{4}$/.test(value) && !valueMap.has(value)) {
-        valueMap.set(value, '{{borrower_phone}}');
+        valueMap.set(value, '{{signer_phone}}');
       }
     }
   }
@@ -1832,28 +1832,28 @@ function templateizeResult(data) {
     }
   }
 
-  // Fallback: infer borrower name from subject line.
-  // Server deduplication removes the Borrower keyDetails row when the name appears in the subject
+  // Fallback: infer signer name from subject line.
+  // Server deduplication removes the Signer keyDetails row when the name appears in the subject
   // (e.g. "Closing created for Lopez Sepulveda (587001998509)"), so valueMap won't have it.
   // Notary subjects use last-name-only (e.g. "Shipping reminder for Bersot"), so {0,3} allows
   // a single capitalized word — {1,3} was incorrectly requiring at least two.
-  const hasBorrowerName = () => [...valueMap.values()].includes('{{borrower_name}}');
+  const hasSignerName = () => [...valueMap.values()].includes('{{signer_name}}');
 
   // "for [Name]" or "about [Name]" in subject line
-  if (!hasBorrowerName() && data.subjectLine) {
+  if (!hasSignerName() && data.subjectLine) {
     const m = data.subjectLine.match(
       /\b(?:for|about)\s+([A-Z][A-Za-z'-]+(?:\s+[A-Z][A-Za-z'-]+){0,3})\b/
     );
-    if (m) addWithLastName(m[1].trim(), '{{borrower_name}}');
+    if (m) addWithLastName(m[1].trim(), '{{signer_name}}');
   }
 
   // "the [Name] closing" in body text — catches last-name-only references like "the Gore closing"
-  // that appear when the borrower name is omitted from keyDetails due to deduplication rules.
-  if (!hasBorrowerName()) {
+  // that appear when the signer name is omitted from keyDetails due to deduplication rules.
+  if (!hasSignerName()) {
     const bodyText = [data.summary, data.notes, data.headline, data.subjectLine].filter(Boolean).join('\n');
     const m = bodyText.match(/\bthe\s+([A-Z][A-Za-z'-]+)\s+closing\b/i);
     if (m && !valueMap.has(m[1])) {
-      addWithLastName(m[1].trim(), '{{borrower_name}}');
+      addWithLastName(m[1].trim(), '{{signer_name}}');
     }
   }
 
@@ -1868,15 +1868,15 @@ function templateizeResult(data) {
     }
   }
 
-  // Fallback: detect borrower last name and closing ID from Snapdocs "Name #ID" subject pattern.
-  // e.g. "Gore #2000234747, Closing linked to notary order" → borrower "Gore", closing ID "2000234747".
-  // The existing borrower fallback only catches "for [Name]" patterns and misses this form.
+  // Fallback: detect signer last name and closing ID from Snapdocs "Name #ID" subject pattern.
+  // e.g. "Gore #2000234747, Closing linked to notary order" → signer "Gore", closing ID "2000234747".
+  // The existing signer fallback only catches "for [Name]" patterns and misses this form.
   if (data.subjectLine) {
     const snapSubject = data.subjectLine.match(/^([A-Z][A-Za-z'-]+(?:\s+[A-Z][A-Za-z'-]+){0,2})\s+#(\d{6,})/);
     if (snapSubject) {
       const [, namepart, idpart] = snapSubject;
-      if (!valueMap.has(namepart) && ![...valueMap.values()].includes('{{borrower_name}}')) {
-        addWithLastName(namepart.trim(), '{{borrower_name}}');
+      if (!valueMap.has(namepart) && ![...valueMap.values()].includes('{{signer_name}}')) {
+        addWithLastName(namepart.trim(), '{{signer_name}}');
       }
       if (!valueMap.has(idpart) && ![...valueMap.values()].includes('{{closing_id}}')) {
         valueMap.set(idpart, '{{closing_id}}');
@@ -1890,7 +1890,7 @@ function templateizeResult(data) {
   // detected via keyDetails, lenderTeam, subject-line, or summary-opening patterns.
   // The valueMap replacement is case-insensitive so adding "reli" also replaces "Reli".
   if (![...valueMap.values()].includes('{{lender_name}}')) {
-    const STOP_WORD = /^(?:a|an|the|your|this|these|no|some|all|you|we|they|it|she|he|its|our|their|there|here|closing|document|settlement|appointment|signing|notification|update|snapdocs|notary|borrower|lender|agent|scheduler|title|access|status|order|message|new|click|please|contact)\b/i;
+    const STOP_WORD = /^(?:a|an|the|your|this|these|no|some|all|you|we|they|it|she|he|its|our|their|there|here|closing|document|settlement|appointment|signing|notification|update|snapdocs|notary|signer|lender|agent|scheduler|title|access|status|order|message|new|click|please|contact)\b/i;
     const DOC_WORD  = /\b(?:documents?|policy|policies|title|recorded|mortgage|deed|scanback|trailing|closing|file|form|package|report|certificate)\b/i;
     const OP_VERB_RE = /^(.{2,50}?)\s+(?:removed|added|uploaded|sent|created|updated|canceled|rescheduled|linked|assigned|reviewed|processed|completed|rejected|received|confirmed|notified|requested|shared|released|archived)\b/i;
     const bodyFields = [data.notes, data.summary, data.headline, data.timeline, data.closingInfo];
@@ -2006,19 +2006,19 @@ function templateizeResult(data) {
     // any lone name-fragment prefix still attached to a placeholder.
     //
     // Step 1: collapse AKA constructs where both sides have a placeholder
-    //   "Spenser D. {{borrower_name}} AKA Spenser O. {{borrower_name}}"
-    //   → "{{borrower_name}} AKA {{borrower_alias}}"
+    //   "Spenser D. {{signer_name}} AKA Spenser O. {{signer_name}}"
+    //   → "{{signer_name}} AKA {{signer_alias}}"
     s = s.replace(
-      /(?:[A-Z][A-Za-z'-]*(?:\s+[A-Z][A-Za-z'.]*)*\s+)?(\{\{borrower_name\}\})\s+(?:AKA|A\.K\.A\.|a\.k\.a\.|also known as)\s+(?:[A-Z][A-Za-z'-]*(?:\s+[A-Z][A-Za-z'.]*)*\s+)?(\{\{borrower_name\}\})/gi,
-      '{{borrower_name}} AKA {{borrower_alias}}'
+      /(?:[A-Z][A-Za-z'-]*(?:\s+[A-Z][A-Za-z'.]*)*\s+)?(\{\{signer_name\}\})\s+(?:AKA|A\.K\.A\.|a\.k\.a\.|also known as)\s+(?:[A-Z][A-Za-z'-]*(?:\s+[A-Z][A-Za-z'.]*)*\s+)?(\{\{signer_name\}\})/gi,
+      '{{signer_name}} AKA {{signer_alias}}'
     );
     //
     // Step 2: strip residual first-name / middle-initial fragments still directly preceding
-    // a borrower_name placeholder outside of AKA context
-    //   "Spenser D. {{borrower_name}}" → "{{borrower_name}}"
+    // a signer_name placeholder outside of AKA context
+    //   "Spenser D. {{signer_name}}" → "{{signer_name}}"
     // Pattern: one capitalized first-name word + optional middle initial, immediately before
     // the placeholder with no other words in between.
-    s = s.replace(/\b[A-Z][a-z]+(?:\s+[A-Z]\.)?\s+(\{\{borrower_name\}\})/g, '$1');
+    s = s.replace(/\b[A-Z][a-z]+(?:\s+[A-Z]\.)?\s+(\{\{signer_name\}\})/g, '$1');
 
     // — Notary credential / document types —
     // Replace specific credential names with {{document_type}} before generic document patterns.
@@ -2141,7 +2141,7 @@ function templateizeResult(data) {
 
 // ─── HAML template generation ─────────────────────────────────────────────────
 
-// Locked HAML for borrower_digital_closing_onboarding.
+// Locked HAML for signer_digital_closing_onboarding.
 // Returns engineer-ready HAML with explicit named sections — not a generic renderer.
 //
 // Field shape contract (all parsed from Claude's string output by the Rails model):
@@ -2152,15 +2152,15 @@ function templateizeResult(data) {
 //
 // closingInfo + timeline are validated as required by the rewrite tool (runSectionValidation).
 // HAML guards them defensively anyway in case validation is bypassed.
-function generateBorrowerOnboardingHaml(data, templateMatch) {
+function generateSignerOnboardingHaml(data, templateMatch) {
   const L = [];
   const ln = (...lines) => L.push(...lines);
 
   ln(
     `-# Email template — auto-generated by Snapdocs Email Rewriter`,
-    `-# Template:  ${templateMatch?.id ?? 'borrower_digital_closing_onboarding'}${templateMatch?.isNew ? ' (new candidate)' : ''}`,
+    `-# Template:  ${templateMatch?.id ?? 'signer_digital_closing_onboarding'}${templateMatch?.isNew ? ' (new candidate)' : ''}`,
     `-# Type:      onboarding`,
-    `-# Recipient: borrower`,
+    `-# Recipient: signer`,
     `-# Subject:   ${data.subjectLine || 'Welcome to your digital closing with {{lender_name}}'}`,
     `-#`,
     `-# Field shape contract — requires these model methods on Email:`,
@@ -2286,8 +2286,8 @@ function shouldRenderMessageCTA(data) {
 }
 
 function generateHaml(data, userType, templateMatch = null) {
-  if (templateMatch?.id === 'borrower_digital_closing_onboarding') {
-    return generateBorrowerOnboardingHaml(data, templateMatch);
+  if (templateMatch?.id === 'signer_digital_closing_onboarding') {
+    return generateSignerOnboardingHaml(data, templateMatch);
   }
   const isPrimary = shouldRenderPrimaryCTA(data) || data.ctaStyle === 'primary';
   const isNavigational = shouldRenderNavigationalCTA(data);
@@ -2416,7 +2416,7 @@ function generateHaml(data, userType, templateMatch = null) {
     );
   }
 
-  // Contact guidance (borrower only — injected by template, not Claude)
+  // Contact guidance (signer only — injected by template, not Claude)
   if (data.contactGuidance && CONTACT_GUIDANCE_TEXT[data.contactGuidance]) {
     ln(
       `    %p.contact-guidance= ${JSON.stringify(CONTACT_GUIDANCE_TEXT[data.contactGuidance])}`,
@@ -2621,7 +2621,7 @@ const REQUIRES_ACTION_OPTIONS = [
 
 export default function App() {
   const [emailContent, setEmailContent] = useState('');
-  const [userType, setUserType] = useState('borrower');
+  const [userType, setUserType] = useState('signer');
   const [requiresAction, setRequiresAction] = useState('auto');
   const [result, setResult] = useState(null);       // original AI output — never mutated
   const [edited, setEdited] = useState(null);        // mutable working copy
@@ -2739,7 +2739,7 @@ export default function App() {
         throw new Error(data.error || `Server error: ${response.status}`);
       }
 
-      const cleaned = sanitizeBorrowerResult(data.result, userType);
+      const cleaned = sanitizeSignerResult(data.result, userType);
       setResult(cleaned);
       setEdited(structuredClone(cleaned));
       setIsDirty(false);
@@ -3482,7 +3482,7 @@ COPY RULE CHECKLIST
 3. Body explains what happened
 4. Next action is clear
 5. No duplicate guidance
-6. Borrower support language only for borrowers
+6. Signer support language only for signers
 7. Message text preserved exactly for message emails
 8. CTA verb matches intended action
 */
