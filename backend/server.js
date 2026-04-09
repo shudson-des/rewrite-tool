@@ -218,6 +218,7 @@ app.post('/api/rewrite', async (req, res) => {
 
   try {
     const augmentedContent = augmentEmailContent(emailContent);
+
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 2048,
@@ -230,26 +231,16 @@ app.post('/api/rewrite', async (req, res) => {
       ],
     });
 
-    const rawText = message.content
-      .filter((block) => block.type === 'text')
-      .map((block) => block.text)
-      .join('');
-
-    // Strip markdown code fences defensively
-    const jsonString = rawText
-      .replace(/^```json\s*/i, '')
-      .replace(/^```\s*/i, '')
-      .replace(/\s*```$/, '')
-      .trim();
+    const raw = message?.content?.[0]?.text;
+    if (!raw) {
+      return res.status(502).json({ error: 'Claude returned an empty response.' });
+    }
 
     let result;
     try {
-      result = JSON.parse(jsonString);
+      result = JSON.parse(raw);
     } catch {
-      console.error('JSON parse failed. Raw response:', rawText);
-      return res.status(502).json({
-        error: 'The AI returned an unexpected response format. Please try again.',
-      });
+      return res.status(502).json({ error: 'Claude returned invalid JSON.' });
     }
 
     const required = ['emailType', 'subjectLine', 'headline', 'rewrittenEmail'];
@@ -260,7 +251,6 @@ app.post('/api/rewrite', async (req, res) => {
       });
     }
 
-    // Guardrails: enforce constraints the model may have ignored
     if (requiresAction === 'yes') {
       result.emailType = 'action_required';
       if (!result.nextSteps || result.nextSteps.length === 0) {
@@ -274,7 +264,6 @@ app.post('/api/rewrite', async (req, res) => {
       result.nextSteps = null;
       result.cta = null;
     } else if (userType === 'support') {
-      // Support emails are always action_required in auto mode.
       result.emailType = 'action_required';
       if (!result.nextSteps || result.nextSteps.length === 0) {
         result.nextSteps = ['Review the details and take the appropriate action.'];
@@ -283,13 +272,6 @@ app.post('/api/rewrite', async (req, res) => {
         result.cta = 'Review details';
       }
     } else if (userType === 'notary' || userType === 'settlement_office') {
-      // Auto mode: these recipient types default to FYI unless the model
-      // had a strong reason to classify as action_required or issue_error.
-      // Exception: blocked-state emails must NOT be downgraded.
-      // A reliable signal that the model genuinely detected a blocked state is
-      // that it produced all three: action_required + nextSteps + cta.
-      // Downgrading in that case would suppress the steps and CTA that are
-      // required for the notary to recover.
       const isBlockedState =
         result.emailType === 'action_required' &&
         Array.isArray(result.nextSteps) && result.nextSteps.length > 0 &&
@@ -306,7 +288,6 @@ app.post('/api/rewrite', async (req, res) => {
       }
     }
 
-    // Strip disallowed no-action variants from summary
     if (result.summary) {
       result.summary = result.summary
         .replace(/\bNo action is required (from you|at this time|at this point)[.,]?\s*/gi, '')
@@ -314,8 +295,6 @@ app.post('/api/rewrite', async (req, res) => {
       if (!result.summary) result.summary = null;
     }
 
-    // Null out summary for simple status_update emails where it only restates
-    // facts already visible in the headline and key details.
     const SIMPLE_STATUS_PATTERN = /^([\w\s]+ has been assigned|[\w\s]+ (is|has been) (scheduled|confirmed|linked|received|completed|assigned)|the signing appointment is scheduled)[.,]?\s*(the signing appointment is scheduled[.,]?)?$/i;
     if (
       result.emailType === 'status_update' &&
@@ -325,29 +304,22 @@ app.post('/api/rewrite', async (req, res) => {
       result.summary = null;
     }
 
-    // Remove key detail rows whose value already appears in the subject line.
-    // If this leaves keyDetails empty, set to empty array so the section is hidden.
     if (Array.isArray(result.keyDetails) && result.subjectLine) {
       result.keyDetails = result.keyDetails.filter(
         (row) => !result.subjectLine.includes(String(row.value ?? '').trim())
       );
     }
 
-    // Strip trailing period from headline
     if (result.headline) {
       result.headline = result.headline.replace(/\.\s*$/, '');
     }
 
-    // Normalise lender team rows — split any values the model combined with em dashes into
-    // separate rows (e.g. "Loan Coordinator — email@lender.com" → two rows), then strip
-    // any remaining leading/trailing em dashes.
     if (Array.isArray(result.lenderTeam)) {
       const expanded = [];
       for (const row of result.lenderTeam) {
         const val = String(row.value ?? '').trim();
         const parts = val.split(/\s*—\s*/).map(p => p.trim()).filter(Boolean);
         if (parts.length > 1) {
-          // Model combined multiple fields — emit each as an unlabelled continuation row
           parts.forEach((part, i) => {
             expanded.push({ label: i === 0 ? row.label : '', value: part });
           });
@@ -358,22 +330,6 @@ app.post('/api/rewrite', async (req, res) => {
       result.lenderTeam = expanded;
     }
 
-    // Guardrail: remove support/contact guidance from all signer body fields.
-    // The template system injects one canonical contact line at render time.
-    // Any contact guidance Claude writes into body slots causes duplication.
-    //
-    // Predicate works on BOTH raw Claude output (pre-normalization) and normalized text,
-    // catching: "loan officer", "settlement agent", "contact your ...", "reach out",
-    // "if you have questions", and their common variants.
-    //
-    // Two-pass stripping per field:
-    //   Pass 1 — line-level: remove lines that are entirely support guidance
-    //   Pass 2 — sentence-level: within each remaining line, remove embedded support sentences
-    // This handles bullet-format lines (each on their own line) AND prose paragraphs where
-    // a contact sentence is embedded mid-paragraph on the same line as event copy.
-    //
-    // After stripping, remaining content is role-normalized (loan officer → lender, etc.)
-    // to catch any role terms that appeared in non-contact contexts.
     if (userType === 'signer') {
       const isSupportGuidance = (s) => {
         const t = (s || '').trim().toLowerCase();
@@ -391,13 +347,10 @@ app.post('/api/rewrite', async (req, res) => {
 
       const stripSupportGuidance = (text) => {
         if (!text || typeof text !== 'string') return text;
-        // Always split into sentences within each line — never test the whole line.
-        // Testing the full line drops valid preceding sentences when a support sentence
-        // is embedded later on the same line (e.g. "Canceled. Contact your lender.").
         const cleaned = text
           .split('\n')
           .map(line => {
-            if (!line.trim()) return line; // preserve blank lines
+            if (!line.trim()) return line;
             const parts = line.split(/(?<=[.!?])\s+/).filter(s => !isSupportGuidance(s));
             return parts.length ? parts.join(' ') : null;
           })
@@ -421,7 +374,6 @@ app.post('/api/rewrite', async (req, res) => {
         }
       }
 
-      // Also normalize role terms in next steps (array field)
       if (Array.isArray(result.nextSteps)) {
         result.nextSteps = result.nextSteps
           .filter(step => !isSupportGuidance(step))
@@ -430,16 +382,11 @@ app.post('/api/rewrite', async (req, res) => {
       }
     }
 
-    // Guardrail: strip educational resource link CTAs from informational emails.
-    // These must be embedded inline in infoSection body text, not in the cta field.
     const EDUCATIONAL_CTA = /\b(borrower resource center|resource center|learn more about|visit .{3,40} center|help center)\b/i;
     if (result.emailType === 'status_update' && result.cta && EDUCATIONAL_CTA.test(result.cta)) {
       result.cta = null;
     }
 
-    // Guardrail: ensure replyGuidance is set for message emails.
-    // Also treat emails with a messageText as message-type for guidance purposes,
-    // in case the model misclassified the emailType.
     const isMessageEmail = result.emailType === 'message' || !!result.messageText;
     if (isMessageEmail && !result.replyGuidance) {
       result.replyGuidance = userType === 'signer'
@@ -450,10 +397,6 @@ app.post('/api/rewrite', async (req, res) => {
       result.replyGuidance = null;
     }
 
-    // Guardrail: ensure ctaStyle is always set and valid.
-    // Navigational CTAs (View closing, Open message) use 'navigational' — rendered as outlined button.
-    // Primary CTAs (action_required) use 'primary' — rendered as solid button.
-    // Secondary (inline text link) is reserved for rare supplementary cases.
     const NAVIGATIONAL_CTA = /^(view|open|go to)\b/i;
     if (!result.ctaStyle || !['primary', 'navigational', 'secondary'].includes(result.ctaStyle)) {
       if (result.emailType === 'message' || result.emailType === 'status_update') {
@@ -462,7 +405,6 @@ app.post('/api/rewrite', async (req, res) => {
         result.ctaStyle = 'primary';
       }
     }
-    // Upgrade: if Claude set secondary but the CTA verb is navigational, correct it.
     if (result.ctaStyle === 'secondary' && result.cta && NAVIGATIONAL_CTA.test(result.cta.trim())) {
       result.ctaStyle = 'navigational';
     }
@@ -479,6 +421,7 @@ app.post('/api/rewrite', async (req, res) => {
       error: err.error,
       full: JSON.stringify(err, null, 2),
     });
+
     if (err instanceof Anthropic.APIError) {
       if (err.status === 401) {
         return res.status(500).json({ error: 'API key is invalid or missing.' });
@@ -488,7 +431,8 @@ app.post('/api/rewrite', async (req, res) => {
       }
       return res.status(502).json({ error: 'Claude API error. Please try again.' });
     }
-    return res.status(500).json({ error: 'Internal server error.' });
+
+    return res.status(500).json({ error: 'Unexpected server error. Please try again.' });
   }
 });
 

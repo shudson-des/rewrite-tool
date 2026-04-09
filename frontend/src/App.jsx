@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Button, Tag, Typography, theme } from 'antd';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://rewrite-tool-backend-s6zi.onrender.com';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 const { Text, Title } = Typography;
 const { useToken } = theme;
 
@@ -2733,7 +2733,8 @@ export default function App() {
         body: JSON.stringify({ emailContent, userType, requiresAction }),
       });
 
-      const data = await response.json();
+      const text = await response.text();
+const data = text ? JSON.parse(text) : {};
 
       if (!response.ok) {
         throw new Error(data.error || `Server error: ${response.status}`);
