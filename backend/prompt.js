@@ -9,10 +9,10 @@ EMAIL TYPE CLASSIFICATION
 Determine the email type:
 
 - action_required → user must take action now
-- status_update   → FYI, state change
-- update          → informational change
-- message         → user-generated message
-- onboarding      → explanatory/setup email
+- status_update   → FYI, state change, no action needed
+- issue_error     → something is blocked or failed; requires action to continue
+- message         → user-generated message or comment
+- onboarding      → explanatory/setup email (signer only)
 
 --------------------------------
 OUTPUT STRUCTURE
@@ -21,10 +21,13 @@ OUTPUT STRUCTURE
 Return JSON with these fields:
 
 {
+  emailType,
+  subtype,
   subjectLine,
   headline,
   summary,
   nextSteps,
+  keyDetailsTitle,
   keyDetails,
   lenderTeam,
   messageText,
@@ -35,7 +38,8 @@ Return JSON with these fields:
   timeline,
   reassurance,
   cta,
-  emailType
+  ctaStyle,
+  rewrittenEmail
 }
 
 Rules:
@@ -82,12 +86,14 @@ Use only these verbs:
 - Download
 - Join
 - Access
+- eSign — use only when the primary action is electronic signature. The CTA must include the word "documents" (e.g. "eSign my documents", "eSign your closing documents"). Do not use as a generic synonym for "review" or "sign". Signer audience only.
 
 Avoid:
 - Manage
 - Continue
 - Open
 - Learn more
+- eSign without "documents" (e.g. "eSign now", "eSign here")
 
 --------------------------------
 COPY RULES
@@ -494,8 +500,9 @@ CTA HIERARCHY — choose based on intent:
 PRIMARY CTA (ctaStyle: "primary") — rendered as a solid button:
 - Use only when emailType is "action_required" or "issue_error"
 - The user must take action to move the closing forward
-- Approved verbs: Review, Upload, Confirm, Respond, Fix, Schedule
-- Strong examples: "Review documents", "Upload document", "Confirm details", "Fix issue", "Schedule signing"
+- Approved verbs: Review, Upload, Confirm, Respond, Fix, Schedule, eSign
+- **eSign** rule: must include "documents" in the CTA (e.g. "eSign my documents", "eSign your closing documents"). Signer audience only. Do not use for other recipient types.
+- Strong examples: "Review documents", "Upload document", "Confirm details", "Fix issue", "Schedule signing", "eSign my documents", "eSign your closing documents"
 
 NAVIGATIONAL CTA (ctaStyle: "navigational") — rendered as an outlined secondary button:
 - Use for status_update and message emails when the email links into a product object
@@ -716,9 +723,9 @@ NOTARY:
 - Works in time-sensitive, schedule-driven workflows.
 - Prioritize time and schedule details. Practical and direct. Keep instructions precise.
 - Default classification: when action is not explicitly required, treat notary emails as status_update (FYI). Do not add a CTA or next steps unless the notary must personally complete a task.
-- For FYI notary emails: keep the summary concise and time-aware. Close with a clarifying line such as: "No action is required from you. We'll notify you if a new appointment is scheduled."
+- For FYI notary emails: keep the summary concise and time-aware. Close with a clarifying line such as: "No action is required. We'll notify you if a new appointment is scheduled."
 - Only classify as action_required when the notary must explicitly do something (e.g. confirm availability, respond to a scheduling request, upload a document).
-- Good style (FYI): "The signing appointment for Maddin has been canceled. No action is required from you. We'll notify you if a new appointment is scheduled."
+- Good style (FYI): "The signing appointment for Maddin has been canceled. No action is required. We'll notify you if a new appointment is scheduled."
 - Good style (action required): "Confirm your availability for the rescheduled signing." / "Respond to the scheduling request."
 - Avoid: adding CTAs or next steps when the notary is only being informed, buried timing details, weak urgency cues when action is genuinely needed.
 
@@ -923,7 +930,7 @@ You MUST return ONLY a valid JSON object. Do not include any explanation, markdo
   "reassurance": "string — signer-only security reassurance, 1-2 sentences. null for non-signer types." | null,
   "notes": "string — additional context or instructions; catch-all for non-signer informational content. null if not needed." | null,
   "cta": "string — 2-5 word verb phrase — REQUIRED (non-null) when emailType is action_required" | null,
-  "ctaStyle": "primary" | "secondary",
+  "ctaStyle": "primary" | "navigational" | "secondary",
   "rewrittenEmail": "string — full plain text email ready to send, with all sections composed together. For message emails, must include the reply guidance sentence verbatim before the sign-off."
 }
 
@@ -971,7 +978,7 @@ Unless this email explicitly requires the notary to complete a task, treat it as
 - Set "nextSteps" to null.
 - Set "cta" to null.
 - Keep the summary concise and time-aware.
-- End the summary or body with: "No action is required from you. We'll notify you if a new appointment is scheduled." (adapt wording to fit the actual scenario).
+- End the summary or body with: "No action is required. We'll notify you if a new appointment is scheduled." (adapt wording to fit the actual scenario).
 - Do not use "You need to" or direct ownership language.
 Override this FYI default and use action_required (with required nextSteps and cta) when:
 - the email contains a blocked state (expired document, inactive status, inability to receive orders, missing required document), OR
