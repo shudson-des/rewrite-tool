@@ -19,8 +19,8 @@ const client = new Anthropic({
   baseURL: process.env.ANTHROPIC_BASE_URL,
 });
 
-app.use(cors({ origin: 'http://localhost:5173' }));
-app.use(express.json({ limit: '50kb' }));
+app.use(cors({ origin: /^http:\/\/localhost:\d+$/ }));
+app.use(express.json({ limit: '10mb' }));
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
@@ -200,24 +200,51 @@ function runComplianceCheck(result, userType, requiresAction, emailContent) {
   return { passed: issues.length === 0, issues };
 }
 
-app.post('/api/rewrite', async (req, res) => {
-  const { emailContent, userType, requiresAction = 'auto' } = req.body;
+const IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 
-  if (!emailContent || typeof emailContent !== 'string' || emailContent.trim().length === 0) {
-    return res.status(400).json({ error: 'emailContent is required and must be a non-empty string.' });
-  }
+app.post('/api/rewrite', async (req, res) => {
+  const { emailContent, imageData, imageMimeType, userType, requiresAction = 'auto' } = req.body;
+
   if (!userType || !['signer', 'lender', 'settlement_agent', 'settlement_office', 'notary', 'support'].includes(userType)) {
     return res.status(400).json({ error: 'userType must be one of: signer, lender, settlement_agent, settlement_office, notary, support.' });
   }
   if (!['auto', 'yes', 'no'].includes(requiresAction)) {
     return res.status(400).json({ error: 'requiresAction must be one of: auto, yes, no.' });
   }
-  if (emailContent.length > 10000) {
+
+  let resolvedContent = emailContent;
+
+  if (imageData) {
+    if (!imageMimeType || !IMAGE_MIME_TYPES.includes(imageMimeType)) {
+      return res.status(400).json({ error: 'imageMimeType must be one of: image/png, image/jpeg, image/gif, image/webp.' });
+    }
+    try {
+      const visionMessage = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2048,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: imageMimeType, data: imageData } },
+            { type: 'text', text: 'This is a screenshot of an email. Extract all the text content exactly as it appears, preserving the structure. Output only the extracted email text, nothing else.' }
+          ]
+        }]
+      });
+      resolvedContent = visionMessage.content[0].text;
+    } catch (err) {
+      return res.status(500).json({ error: 'Failed to extract text from image.' });
+    }
+  }
+
+  if (!resolvedContent || typeof resolvedContent !== 'string' || resolvedContent.trim().length === 0) {
+    return res.status(400).json({ error: 'emailContent is required and must be a non-empty string.' });
+  }
+  if (resolvedContent.length > 10000) {
     return res.status(400).json({ error: 'emailContent must be under 10,000 characters.' });
   }
 
   try {
-    const augmentedContent = augmentEmailContent(emailContent);
+    const augmentedContent = augmentEmailContent(resolvedContent);
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',

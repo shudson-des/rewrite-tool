@@ -101,7 +101,9 @@ function extractTextFromHTML(html) {
     .trim();
 }
 
-const ACCEPTED_TYPES = ['.html', '.htm'];
+const ACCEPTED_TYPES = ['.html', '.htm', '.png', '.jpg', '.jpeg', '.gif', '.webp'];
+const IMAGE_TYPES = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
+const IMAGE_MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp' };
 
 function validateFiles(files) {
   const valid = [];
@@ -111,7 +113,7 @@ function validateFiles(files) {
     if (ACCEPTED_TYPES.includes(ext)) {
       valid.push(f);
     } else {
-      errors.push(`"${f.name}" is not a supported file type. Only .html and .htm files are accepted.`);
+      errors.push(`"${f.name}" is not a supported file type. Accepted: .html, .htm, .png, .jpg, .jpeg, .gif, .webp.`);
     }
   }
   return { valid, errors };
@@ -2637,8 +2639,9 @@ export default function App() {
   const [copied, setCopied] = useState(false);
 
   // Upload state
-  const [uploadedFiles, setUploadedFiles] = useState([]); // [{id, name, text}]
+  const [uploadedFiles, setUploadedFiles] = useState([]); // [{id, name, text, isImage?, imageData?, mimeType?}]
   const [activeFileId, setActiveFileId] = useState(null);
+  const [activeImageData, setActiveImageData] = useState(null); // {data, mimeType} when image is active
   const [isDragging, setIsDragging] = useState(false);
   const [fileError, setFileError] = useState(null);
   const fileInputRef = useRef(null);
@@ -2653,26 +2656,50 @@ export default function App() {
     }
 
     valid.forEach((file) => {
+      const ext = file.name.slice(file.name.lastIndexOf('.')).toLowerCase();
+      const isImage = IMAGE_TYPES.includes(ext);
       const reader = new FileReader();
       reader.onload = (e) => {
-        const text = extractTextFromHTML(e.target.result);
-        const entry = { id: nextFileId++, name: file.name, text };
+        let entry;
+        if (isImage) {
+          const mimeType = IMAGE_MIME[ext];
+          // Strip the data URL prefix to get raw base64
+          const base64 = e.target.result.split(',')[1];
+          entry = { id: nextFileId++, name: file.name, text: null, isImage: true, imageData: base64, mimeType };
+        } else {
+          const text = extractTextFromHTML(e.target.result);
+          entry = { id: nextFileId++, name: file.name, text };
+        }
         setUploadedFiles((prev) => {
-          // Skip if same filename already loaded
           if (prev.some((f) => f.name === file.name)) return prev;
           return [...prev, entry];
         });
-        // Auto-select first file loaded
-        setActiveFileId((prev) => prev ?? entry.id);
-        setEmailContent(text);
+        setActiveFileId((prev) => {
+          if (prev != null) return prev;
+          if (isImage) {
+            setActiveImageData({ data: entry.imageData, mimeType: entry.mimeType });
+            setEmailContent('');
+          } else {
+            setActiveImageData(null);
+            setEmailContent(entry.text);
+          }
+          return entry.id;
+        });
       };
-      reader.readAsText(file);
+      if (isImage) reader.readAsDataURL(file);
+      else reader.readAsText(file);
     });
   }
 
   function handleFileSelect(entry) {
     setActiveFileId(entry.id);
-    setEmailContent(entry.text);
+    if (entry.isImage) {
+      setActiveImageData({ data: entry.imageData, mimeType: entry.mimeType });
+      setEmailContent('');
+    } else {
+      setActiveImageData(null);
+      setEmailContent(entry.text);
+    }
   }
 
   function handleRemoveFile(id) {
@@ -2681,7 +2708,13 @@ export default function App() {
       if (activeFileId === id) {
         const fallback = next[0] ?? null;
         setActiveFileId(fallback?.id ?? null);
-        setEmailContent(fallback?.text ?? '');
+        if (fallback?.isImage) {
+          setActiveImageData({ data: fallback.imageData, mimeType: fallback.mimeType });
+          setEmailContent('');
+        } else {
+          setActiveImageData(null);
+          setEmailContent(fallback?.text ?? '');
+        }
       }
       return next;
     });
@@ -2717,8 +2750,8 @@ export default function App() {
 // ─────────────────────────────────────────────────────────────────────────────
 
   async function handleRewrite() {
-    if (!emailContent.trim()) {
-      setError('Please paste an email to rewrite.');
+    if (!activeImageData && !emailContent.trim()) {
+      setError('Please paste an email or upload a file to rewrite.');
       return;
     }
     setLoading(true);
@@ -2726,11 +2759,15 @@ export default function App() {
     setResult(null);
     setCopied(false);
 
+    const payload = activeImageData
+      ? { imageData: activeImageData.data, imageMimeType: activeImageData.mimeType, userType, requiresAction }
+      : { emailContent, userType, requiresAction };
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/rewrite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emailContent, userType, requiresAction }),
+        body: JSON.stringify(payload),
       });
 
       const text = await response.text();
@@ -2907,13 +2944,13 @@ const data = text ? JSON.parse(text) : {};
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".html,.htm"
+                accept=".html,.htm,.png,.jpg,.jpeg,.gif,.webp"
                 multiple
                 style={{ display: 'none' }}
                 onChange={(e) => { readFiles(e.target.files); e.target.value = ''; }}
               />
               <span className="upload-icon" aria-hidden="true">↑</span>
-              <span className="upload-text">Drop .html files here or <u>browse</u></span>
+              <span className="upload-text">Drop .html or image files here or <u>browse</u></span>
             </div>
 
             {fileError && (
@@ -2946,18 +2983,31 @@ const data = text ? JSON.parse(text) : {};
               </ul>
             )}
 
-            <label htmlFor="email-content" className="field-label">
-              {uploadedFiles.length > 0 ? 'Extracted content (editable)' : 'Paste email content'}
-            </label>
-            <textarea
-              id="email-content"
-              className="email-textarea"
-              value={emailContent}
-              onChange={(e) => setEmailContent(e.target.value)}
-              placeholder="Paste the original email content here..."
-              rows={14}
-              disabled={loading}
-            />
+            {activeImageData ? (
+              <>
+                <label className="field-label">Screenshot preview</label>
+                <img
+                  src={`data:${activeImageData.mimeType};base64,${activeImageData.data}`}
+                  alt="Uploaded email screenshot"
+                  style={{ width: '100%', borderRadius: 6, border: '1px solid var(--border)', marginBottom: 8 }}
+                />
+              </>
+            ) : (
+              <>
+                <label htmlFor="email-content" className="field-label">
+                  {uploadedFiles.length > 0 ? 'Extracted content (editable)' : 'Paste email content'}
+                </label>
+                <textarea
+                  id="email-content"
+                  className="email-textarea"
+                  value={emailContent}
+                  onChange={(e) => setEmailContent(e.target.value)}
+                  placeholder="Paste the original email content here..."
+                  rows={14}
+                  disabled={loading}
+                />
+              </>
+            )}
 
             <fieldset className="user-type-group">
               <legend className="field-label">Recipient type</legend>
@@ -3014,7 +3064,7 @@ const data = text ? JSON.parse(text) : {};
             <button
               className="rewrite-btn"
               onClick={handleRewrite}
-              disabled={loading || !emailContent.trim()}
+              disabled={loading || (!emailContent.trim() && !activeImageData)}
             >
               {loading ? (
                 <>
